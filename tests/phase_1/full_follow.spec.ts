@@ -1,12 +1,11 @@
 import {expect, test} from '@playwright/test';
-import {login} from '../login';
+import {login, loginWithRole} from '../login';
 
 const contractorName = 'TA autotest 1';
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);
   await login(page, '/CBMS_DOCUMENT_BY_PID');
-  await page.waitForSelector('p-treenode', {state: 'visible'});
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
@@ -169,21 +168,7 @@ test('import document by pid', async ({page}) => {
 
 
 test('verify', async ({page}) => {
-  // await login(page, '/CBMS_DOCUMENT_BY_PID');
-  await page.goto('http://localhost:8080/');
-  if (page.url().startsWith('chrome-error://chromewebdata/')) {
-    await page.getByRole('button', {name: 'Advanced'}).click();
-    await page.getByRole('link', {name: 'Proceed to 10.255.58.201 ('}).click();
-    if (page.url().startsWith('http://localhost:8080')) {
-      await page.locator('.header-avatar').click();
-      await page.getByRole('link', {name: 'Đăng xuất'}).click();
-    }
-    await page.locator('#username').fill(process.env.SSO_USERNAME_PC);
-    await page.locator('#password').fill(process.env.PASSWORD_PC);
-    await page.getByRole('button', {name: 'ĐĂNG NHẬP'}).click();
-    await page.waitForSelector('p-treenode', {state: 'visible'});
-    await page.goto('/CBMS_DOCUMENT_BY_PID');
-  }
+  await login(page, '/CBMS_DOCUMENT_BY_PID', process.env.SSO_USERNAME_PC, process.env.PASSWORD_PC);
 
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
