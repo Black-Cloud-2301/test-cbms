@@ -29,6 +29,9 @@ export default defineConfig({
     baseURL: 'http://localhost:8080',
     headless: false,
     storageState: 'tests/state.json',
+    // launchOptions: {
+    //   slowMo: 1000
+    // },
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

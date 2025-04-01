@@ -67,7 +67,6 @@ test('check form 7', async ({page}) => {
 })
 
 test('check form 8', async ({page}) => {
-  page.set
   await login(page, '/CBMS_DOCUMENT_BY_PID');
   await page.waitForSelector('p-treenode', {state: 'visible'});
   await page.locator(`input[name="keySearch"]`).fill('TA autotest 1');
