@@ -47,8 +47,9 @@ test('save form 7', async ({page}) => {
     const row = tableRow.nth(i);
     await row.locator('#errorCorrectionValue').pressSequentially(i + 1 + '00000');
     await row.locator('#adjustmentDifferenceValue').pressSequentially(i + 5 + '0000');
-    await row.locator('#exchangeRate').fill('Không biết là cái gì');
+    await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
   }
+  await page.pause();
   await saveForm(page, subDialog);
 })
 
@@ -70,7 +71,7 @@ test('save form 8', async ({page}) => {
     if (await row.locator('input#hsdtValidityDays').inputValue()) {
       await row.locator('input#hsdtValidityDays').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
     }
-    await row.locator('input#hsdtValidityDays').fill((i + 1).toString());
+    await row.locator('input#hsdtValidityDays').pressSequentially((i + 1).toString());
     await page.waitForTimeout(100);
     if (await row.locator('input#bidSecurityAmount').inputValue()) {
       await row.locator('input#bidSecurityAmount').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
@@ -80,7 +81,7 @@ test('save form 8', async ({page}) => {
     /*if (await row.locator('input#exchangeRate').inputValue()) {
       await row.locator('input#exchangeRate').locator('..').locator('span.pi-times').click();
     }*/
-    await row.locator('input#exchangeRate').fill('Không biết là cái gì');
+    await row.locator('input#bidSecurityValidityDays').fill('Không biết là cái gì');
   }
 
   table = subDialog.locator('app-form-table').nth(1);
@@ -115,6 +116,8 @@ test('save form 9', async ({page}) => {
       await row.locator('input#price').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
     }
     await row.locator('input#price').pressSequentially(i + 1 + '0000');
+    await page.waitForTimeout(100);
+    await row.locator('input#vat').pressSequentially(1 + ',0' + i);
     await page.waitForTimeout(100);
   }
 
@@ -187,7 +190,6 @@ test('verify bid evaluation', async ({page}) => {
   await page.getByRole('row', { name: '11. Thư chấp thuận HSDT' }).getByLabel('-- Chọn --').click();
   await page.getByRole('option', { name: 'Xác nhận' }).click();
   await page.getByRole('row', { name: '11. Thư chấp thuận HSDT' }).getByRole('textbox').fill('Chú thích 11. Thư chấp thuận HSDT');
-
   await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
 })
 

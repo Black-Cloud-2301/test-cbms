@@ -1,4 +1,4 @@
-import {expect, Page, test} from '@playwright/test';
+import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {log} from 'node:util';
 
@@ -25,7 +25,6 @@ test('import bid evaluation', async ({page}) => {
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import dữ liệu thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
-
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   //   second step
 
@@ -51,13 +50,7 @@ test('import bid evaluation', async ({page}) => {
     await page.getByRole('button', {name: 'Lưu'}).click();
   }
 
-  await page.getByRole('button', {name: 'Ghi lại'}).click();
-
-  resPromise = await page.waitForResponse('**/cbms-service/bid-evaluation/save');
-  resJson = await resPromise.json();
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Lưu dữ liệu thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
+  await saveForm(page, mainDialog);
 
   // Step 3
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
@@ -92,7 +85,8 @@ test('import bid evaluation', async ({page}) => {
     await page.getByRole('button', {name: 'Lưu'}).click();
   }
 
-  await page.getByRole('button', {name: 'Ghi lại'}).click();
+  await saveForm(page, mainDialog);
+
 
   // STEP 4
   await loginWithRole(page, process.env.SSO_USERNAME_TECHNOLOGY, process.env.PASSWORD_TECHNOLOGY, '/CBMS_BID_EVALUATION');
@@ -134,7 +128,9 @@ test('import bid evaluation', async ({page}) => {
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await page.getByRole('button', {name: 'Ghi lại'}).click();
+
+  await saveForm(page, mainDialog);
+
 
   // STEP 6
   await loginWithRole(page, process.env.SSO_USERNAME, process.env.PASSWORD, '/CBMS_BID_EVALUATION');
@@ -156,3 +152,14 @@ test('import bid evaluation', async ({page}) => {
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Chốt thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
 })
+
+const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/save', successText: string = 'Lưu dữ liệu thành công') => {
+  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  let resPromise = await page.waitForResponse(url);
+  let resJson = await resPromise.json();
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
+  await alertSuccess.locator('.p-toast-icon-close').click();
+}
