@@ -1,7 +1,8 @@
 import {expect, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
+import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 1';
+const contractorName = 'TA autotest 4';
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);
@@ -168,7 +169,7 @@ test('import document by pid', async ({page}) => {
 
 
 test('verify', async ({page}) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID', process.env.SSO_USERNAME_PC, process.env.PASSWORD_PC);
+  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
 
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
@@ -178,10 +179,29 @@ test('verify', async ({page}) => {
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
 
   await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByRole('row').nth(1).locator('div.p-checkbox-box').click();
+  await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
 
-  await page.getByRole('button', {name: 'Xác nhận'}).click();
-  await page.getByRole('button', {name: 'Có'}).click();
+  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+
+  let tableRow = mainDialog.locator('tbody tr');
+  let countBidder = await tableRow.count();
+  while (countBidder <= 1) {
+    countBidder = await tableRow.count();
+    await page.waitForTimeout(100);
+  }
+  for (let i = 1; i < countBidder; i++) {
+    const row = tableRow.nth(i);
+    await row.getByRole('combobox', {name: '--Chọn--'}).click();
+    // if(i===1) {
+    //   await page.getByRole('option', {name: 'Hủy', exact: true}).click();
+    // } else {
+      await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
+    // }
+    await page.waitForTimeout(100);
+    await row.locator('input#note').fill('Chú thích ' + (i + 1))
+  }
+
+  await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
 
   let resPromise = await page.waitForResponse('**/cbms-service/document-by-pid/confirm');
   let resJson = await resPromise.json();

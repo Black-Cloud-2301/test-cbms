@@ -1,7 +1,7 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 
-const contractorName = 'TA autotest 1';
+const contractorName = 'TA autotest 3';
 
 test('save form 7', async ({page}) => {
   await loginAndSearch(page);
@@ -49,7 +49,6 @@ test('save form 7', async ({page}) => {
     await row.locator('#adjustmentDifferenceValue').pressSequentially(i + 5 + '0000');
     await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
   }
-  await page.pause();
   await saveForm(page, subDialog);
 })
 
@@ -116,6 +115,7 @@ test('save form 9', async ({page}) => {
       await row.locator('input#price').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
     }
     await row.locator('input#price').pressSequentially(i + 1 + '0000');
+    await row.locator('input#vat').pressSequentially(i + 5 + "");
     await page.waitForTimeout(100);
     await row.locator('input#vat').pressSequentially(1 + ',0' + i);
     await page.waitForTimeout(100);

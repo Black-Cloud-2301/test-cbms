@@ -1,13 +1,13 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {log} from 'node:util';
+import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 1';
+const contractorName = 'TA autotest 4';
 
 test('import bid evaluation', async ({page}) => {
   test.setTimeout(120000);
 
-  await login(page, '/CBMS_BID_EVALUATION');
+  await login(page, '/CBMS_BID_EVALUATION', USERS.MANH);
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
@@ -25,6 +25,16 @@ test('import bid evaluation', async ({page}) => {
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import dữ liệu thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
+
+  await page.pause();
+
+  await saveForm(page, mainDialog);
+
+  await loginWithRole(page, USERS.NHUNG, '/CBMS_BID_EVALUATION');
+  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
+  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
+  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   //   second step
 
@@ -89,7 +99,7 @@ test('import bid evaluation', async ({page}) => {
 
 
   // STEP 4
-  await loginWithRole(page, process.env.SSO_USERNAME_TECHNOLOGY, process.env.PASSWORD_TECHNOLOGY, '/CBMS_BID_EVALUATION');
+  await loginWithRole(page, USERS.HONG, '/CBMS_BID_EVALUATION');
 
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
@@ -117,8 +127,9 @@ test('import bid evaluation', async ({page}) => {
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Lưu dữ liệu thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
 
+
   // STEP 5
-  await loginWithRole(page, process.env.SSO_USERNAME_FINANCE, process.env.PASSWORD_FINANCE, '/CBMS_BID_EVALUATION');
+  await loginWithRole(page, USERS.TUOI, '/CBMS_BID_EVALUATION');
 
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
@@ -132,8 +143,9 @@ test('import bid evaluation', async ({page}) => {
   await saveForm(page, mainDialog);
 
 
+
   // STEP 6
-  await loginWithRole(page, process.env.SSO_USERNAME, process.env.PASSWORD, '/CBMS_BID_EVALUATION');
+  await loginWithRole(page, USERS.NHUNG, '/CBMS_BID_EVALUATION');
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
