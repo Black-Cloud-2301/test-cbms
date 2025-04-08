@@ -24,6 +24,7 @@ test('import bid evaluation', async ({page}) => {
     expect(resJson.type).toEqual('SUCCESS');
     expect(resJson.data.filePath).not.toBe(null);
   }
+  await page.pause();
 })
 
 const loginAndSearch = async (page: Page) => {

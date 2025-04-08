@@ -1,5 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
+import {USERS} from '../../constants/user';
 
 const contractorName = 'TA autotest 3';
 
@@ -151,7 +152,7 @@ test('propose bid evaluation', async ({page}) => {
 })
 
 test('verify bid evaluation', async ({page}) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID', process.env.SSO_USERNAME_PC, process.env.PASSWORD_PC);
+  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
@@ -175,22 +176,34 @@ test('verify bid evaluation', async ({page}) => {
     await page.waitForTimeout(100);
   }*/
 
-  await page.getByRole('row', { name: '7. Tờ trình phê duyệt KQLCNT' }).getByLabel('-- Chọn --').click();
-  await page.getByRole('option', {name: 'Hủy', exact: true}).click();
-  await page.getByRole('row', { name: '7. Tờ trình phê duyệt KQLCNT' }).getByRole('textbox').fill('Chú thích 7. Tờ trình phê duyệt KQLCNT');
-  await page.getByRole('row', { name: '8. Báo cáo thẩm định KQLCNT' }).getByLabel('-- Chọn --').click();
-  await page.getByRole('option', { name: 'Xác nhận' }).click();
-  await page.getByRole('row', { name: '8. Báo cáo thẩm định KQLCNT' }).getByRole('textbox').fill('Chú thích 8. Báo cáo thẩm định KQLCNT');
-  await page.getByRole('row', { name: '9. Quyết định KQLCNT' }).getByLabel('-- Chọn --').click();
-  await page.getByRole('option', { name: 'Xác nhận' }).click();
-  await page.getByRole('row', { name: '9. Quyết định KQLCNT' }).getByRole('textbox').fill('Chú thích 9. Quyết định KQLCNT');
-  await page.getByRole('row', { name: '10. Thông báo KQLCNT' }).getByLabel('-- Chọn --').click();
-  await page.getByRole('option', { name: 'Xác nhận' }).click();
-  await page.getByRole('row', { name: '10. Thông báo KQLCNT' }).getByRole('textbox').fill('Chú thích 10. Thông báo KQLCNT');
-  await page.getByRole('row', { name: '11. Thư chấp thuận HSDT' }).getByLabel('-- Chọn --').click();
-  await page.getByRole('option', { name: 'Xác nhận' }).click();
-  await page.getByRole('row', { name: '11. Thư chấp thuận HSDT' }).getByRole('textbox').fill('Chú thích 11. Thư chấp thuận HSDT');
+  let tableRow = mainDialog.locator('tbody tr');
+  let countBidder = await tableRow.count();
+  while (countBidder <= 1) {
+    countBidder = await tableRow.count();
+    await page.waitForTimeout(100);
+  }
+  for (let i = 1; i < countBidder; i++) {
+    const row = tableRow.nth(i);
+    await row.getByRole('combobox', {name: '--Chọn--'}).click();
+    // if(i===1) {
+    //   await page.getByRole('option', {name: 'Hủy', exact: true}).click();
+    // } else {
+    await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
+    // }
+    await page.waitForTimeout(100);
+    await row.locator('input#note').fill('Chú thích ' + (i + 1))
+  }
+
   await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
+
+  let resPromise = await page.waitForResponse('**/cbms-service/document-by-pid/confirm');
+  let resJson = await resPromise.json();
+
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
+  await alertSuccess.locator('.p-toast-icon-close').click();
 })
 
 const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật tờ trình phê duyệt KQLCNT thành công') => {

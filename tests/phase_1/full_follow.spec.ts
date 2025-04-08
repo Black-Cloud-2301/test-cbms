@@ -2,7 +2,7 @@ import {expect, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 4';
+const contractorName = 'TA autotest 1';
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);
@@ -170,6 +170,7 @@ test('import document by pid', async ({page}) => {
 
 test('verify', async ({page}) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
+
 
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
