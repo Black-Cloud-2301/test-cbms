@@ -207,6 +207,7 @@ test('verify bid evaluation', async ({page}) => {
 })
 
 const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật tờ trình phê duyệt KQLCNT thành công') => {
+  await page.pause();
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');

@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
+import {IUser, USERS} from '../../constants/user';
 
 const contractorName = 'TA autotest 3';
 
@@ -8,13 +8,10 @@ test('import bid evaluation', async ({page}) => {
   test.setTimeout(120000);
 
   await login(page, '/CBMS_BID_EVALUATION', USERS.MANH);
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await search(page);
 
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  await page.pause();
+  // await page.pause();
 
   // upload file mailing 2
   await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bm_mailing_danh_gia.xlsx');
@@ -30,11 +27,7 @@ test('import bid evaluation', async ({page}) => {
 
   await saveForm(page, mainDialog);
 
-  await loginWithRole(page, USERS.NHUNG, '/CBMS_BID_EVALUATION');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await loginWithRoleAndSearch(page,USERS.NHUNG);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   //   second step
 
@@ -63,10 +56,7 @@ test('import bid evaluation', async ({page}) => {
   await saveForm(page, mainDialog);
 
   // Step 3
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await search(page);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
 
@@ -99,19 +89,14 @@ test('import bid evaluation', async ({page}) => {
 
 
   // STEP 4
-  await loginWithRole(page, USERS.HONG, '/CBMS_BID_EVALUATION');
-
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await loginWithRoleAndSearch(page,USERS.HONG);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
 
   for (let i = 0; i < countBidder; i++) {
     let currentRow = tableRow.nth(i);
-    let combobox = currentRow.getByRole('combobox', {name: '--Chọn--'});
+    let combobox = currentRow.locator('span#technicalAssessment');
     if (await combobox.isDisabled()) {
       continue;
     }
@@ -119,16 +104,10 @@ test('import bid evaluation', async ({page}) => {
     await page.getByRole('option', {name: 'Đạt', exact: true}).click();
     await currentRow.locator('#technicalAssessmentComment').fill('Nhận xét của tổ chuyên gia ' + (i + 1));
   }
-  await page.pause();
   await saveForm(page, mainDialog);
 
   // STEP 5
-  await loginWithRole(page, USERS.TUOI, '/CBMS_BID_EVALUATION');
-
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await loginWithRoleAndSearch(page,USERS.TUOI);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -138,18 +117,17 @@ test('import bid evaluation', async ({page}) => {
 
 
   // STEP 6
-  await loginWithRole(page, USERS.NHUNG, '/CBMS_BID_EVALUATION');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await loginWithRoleAndSearch(page,USERS.NHUNG);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Chốt'}).click();
 
+  await mainDialog.getByRole('button', {name: 'Chọn file'});
+
+  await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
+  await mainDialog.getByRole('button', {name: 'Chốt'}).click();
 
   resPromise = await page.waitForResponse('**/cbms-service/bid-evaluation/save');
   resJson = await resPromise.json();
@@ -162,10 +140,7 @@ test('reevaluate', async ({page}) => {
   test.setTimeout(120000);
 
   await login(page, '/CBMS_BID_EVALUATION', USERS.NHUNG);
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await search(page);
   await page.getByRole('button', {name: 'Đánh giá lại'}).click();
   await page.getByRole('button', {name: 'Có'}).click();
   let resPromise = await page.waitForResponse('**/cbms-service/bid-evaluation/reevaluate/**');
@@ -185,10 +160,7 @@ test('reevaluate', async ({page}) => {
 
 
   // Step 3
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await search(page);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
 
@@ -196,12 +168,7 @@ test('reevaluate', async ({page}) => {
 
 
   // STEP 4
-  await loginWithRole(page, USERS.HONG, '/CBMS_BID_EVALUATION');
-
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await loginWithRoleAndSearch(page,USERS.HONG);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -215,12 +182,8 @@ test('reevaluate', async ({page}) => {
 
 
   // STEP 5
-  await loginWithRole(page, USERS.TUOI, '/CBMS_BID_EVALUATION');
+  await loginWithRoleAndSearch(page,USERS.TUOI);
 
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -230,16 +193,14 @@ test('reevaluate', async ({page}) => {
 
 
   // STEP 6
-  await loginWithRole(page, USERS.NHUNG, '/CBMS_BID_EVALUATION');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  await loginWithRoleAndSearch(page,USERS.NHUNG);
+
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.pause();
   await mainDialog.getByRole('button', {name: 'Chốt'}).click();
 
 
@@ -259,4 +220,17 @@ const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-serv
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
+}
+
+const loginWithRoleAndSearch = async (page: Page, user: IUser) => {
+  await loginWithRole(page, user, '/CBMS_BID_EVALUATION');
+  await search(page);
+}
+
+const search = async (page: Page) => {
+  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
+  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
+  await page.waitForTimeout(500);
+  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 }
