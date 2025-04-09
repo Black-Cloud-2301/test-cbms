@@ -14,6 +14,7 @@ test('import bid evaluation', async ({page}) => {
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  await page.pause();
 
   // upload file mailing 2
   await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bm_mailing_danh_gia.xlsx');
@@ -118,14 +119,8 @@ test('import bid evaluation', async ({page}) => {
     await page.getByRole('option', {name: 'Đạt', exact: true}).click();
     await currentRow.locator('#technicalAssessmentComment').fill('Nhận xét của tổ chuyên gia ' + (i + 1));
   }
-
-  await page.getByRole('button', {name: 'Ghi lại'}).click();
-  resPromise = await page.waitForResponse('**/cbms-service/bid-evaluation/save');
-  resJson = await resPromise.json();
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Lưu dữ liệu thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-
+  await page.pause();
+  await saveForm(page, mainDialog);
 
   // STEP 5
   await loginWithRole(page, USERS.TUOI, '/CBMS_BID_EVALUATION');
@@ -140,7 +135,6 @@ test('import bid evaluation', async ({page}) => {
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
 
   await saveForm(page, mainDialog);
-
 
 
   // STEP 6
@@ -235,7 +229,6 @@ test('reevaluate', async ({page}) => {
   await saveForm(page, mainDialog);
 
 
-
   // STEP 6
   await loginWithRole(page, USERS.NHUNG, '/CBMS_BID_EVALUATION');
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
@@ -266,5 +259,4 @@ const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-serv
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
-  await page.pause();
 }
