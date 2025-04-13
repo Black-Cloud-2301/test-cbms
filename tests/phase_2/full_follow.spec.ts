@@ -1,8 +1,8 @@
 import {expect, test} from '@playwright/test';
-import {login, loginWithRole} from '../login';
+import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 3';
+const contractorName = 'TA autotest 7';
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);

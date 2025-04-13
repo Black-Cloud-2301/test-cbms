@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 3';
+const contractorName = 'TA autotest 7';
 
 test('save form 7', async ({page}) => {
   await loginAndSearch(page);
