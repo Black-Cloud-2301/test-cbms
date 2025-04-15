@@ -4,7 +4,7 @@ import {USERS} from '../../constants/user';
 
 const contractorName = 'TA autotest 7';
 
-test('import document by pid', async ({page}) => {
+test('import document by pid 3.1.11', async ({page}) => {
   test.setTimeout(120000);
   await loginAndSearch(page);
 

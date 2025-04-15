@@ -2,7 +2,7 @@ import {expect, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 7';
+const contractorName = 'TA autotest 3';
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);
@@ -63,8 +63,8 @@ test('import document by pid', async ({page}) => {
   const secondDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình thành lập tổ chuyên gia'});
   const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
 
-  if (!await secondDialog.locator('input#proposalDate').inputValue()) {
-    await secondDialog.locator('input#proposalDate').pressSequentially('23/03/2025');
+  if (!await secondDialog.locator('input#expertApproval').inputValue()) {
+    await secondDialog.locator('input#expertApproval').pressSequentially('23/03/2025');
     await datePickerCalendar.locator('span.p-highlight').first().click();
   }
   await secondDialog.getByRole('button', {name: 'Tiếp'}).click();
