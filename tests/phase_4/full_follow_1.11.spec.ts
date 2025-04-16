@@ -147,8 +147,8 @@ test('import document by pid 3.1.11', async ({page}) => {
   await page.getByRole('row', {name: 'Hồ sơ mời thầu'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật HSMT'});
   if (await subDialog.locator('input#effectiveDateHSDT').inputValue()) {
-      await subDialog.locator('input#effectiveDateHSDT').locator('..').locator('span.pi-times').click();
-    }
+    await subDialog.locator('input#effectiveDateHSDT').locator('..').locator('span.pi-times').click();
+  }
   await subDialog.locator('input#effectiveDateHSDT').fill('1 ngày');
 
   if (await subDialog.locator('input#bidSecurityValue').inputValue()) {
@@ -227,7 +227,7 @@ const loginAndSearch = async (page: Page) => {
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
 }
 
-const checkSuccess = async (page:Page, url: string = '**/cbms-service/document-by-pid/import', successText: string = 'Import dữ liệu thành công') => {
+const checkSuccess = async (page: Page, url: string = '**/cbms-service/document-by-pid/import', successText: string = 'Import dữ liệu thành công') => {
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
   let resPromise = await page.waitForResponse(url);
   let resJson = await resPromise.json()
