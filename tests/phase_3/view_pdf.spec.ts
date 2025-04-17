@@ -1,7 +1,7 @@
 import {expect, Page, test} from '@playwright/test';
 import {login} from '../login';
 
-const contractorName = 'TA autotest 3';
+const contractorName = 'TA autotest 6';
 
 test('import bid evaluation', async ({page}) => {
   test.setTimeout(120000);

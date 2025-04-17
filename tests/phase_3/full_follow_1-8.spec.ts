@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 8';
+const contractorName = 'TA autotest 5';
 
 test('save form 7', async ({page}) => {
   await loginAndSearch(page);
@@ -116,9 +116,10 @@ test('save form 9', async ({page}) => {
       await row.locator('input#price').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
     }
     await row.locator('input#price').pressSequentially(i + 1 + '0000');
-    await row.locator('input#vat').pressSequentially(i + 5 + "");
-    await page.waitForTimeout(100);
-    await row.locator('input#vat').pressSequentially(1 + ',0' + i);
+    if (await row.locator('input#vat').inputValue()) {
+      await row.locator('input#vat').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+    }
+    await row.locator('input#vat').pressSequentially(i + 5 + '');
     await page.waitForTimeout(100);
   }
 
@@ -133,7 +134,17 @@ test('save form 10', async ({page}) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
   const subDialog = page.getByRole('dialog', {name: 'Cập nhật thông báo KQLCNT'});
 
-  await saveForm(page, subDialog, '**/cbms-service/bid-evaluation/saveUnsuccessfulBidder', 'Cập nhật thông báo KQLCNT thành công');
+  let table = subDialog.locator('app-form-table').first();
+  let tableRow = table.locator('tbody tr');
+  let countBidder = await tableRow.count();
+  for (let i = 0; i < countBidder; i++) {
+    const row = tableRow.nth(i);
+    if (await row.locator('input#ratingSummaryNote').inputValue()) {
+      await row.locator('input#ratingSummaryNote').locator('..').locator('span.pi-times').click();
+    }
+    await row.locator('input#ratingSummaryNote').fill('Nhà thầu thiếu tiền ' + (i + 1));
+  }
+  await saveForm(page, subDialog);
 })
 
 test('propose bid evaluation', async ({page}) => {
@@ -141,7 +152,7 @@ test('propose bid evaluation', async ({page}) => {
 
   await page.getByRole('button', {name: 'Đề xuất'}).click();
 
-  let resPromise = await page.waitForResponse('**/cbms-service/document-by-pid/propose');
+  let resPromise = await page.waitForResponse('**/cbms-service/document-by-pid/propose/**');
   let resJson = await resPromise.json();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
@@ -206,7 +217,7 @@ test('verify bid evaluation', async ({page}) => {
   await alertSuccess.locator('.p-toast-icon-close').click();
 })
 
-const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật tờ trình phê duyệt KQLCNT thành công') => {
+const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật dữ liệu thành công') => {
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');

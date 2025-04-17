@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 7';
+const contractorName = 'TA autotest 9';
 
 test('import document by pid 3.1.11', async ({page}) => {
   test.setTimeout(120000);
@@ -216,7 +216,7 @@ test('verify', async ({page}) => {
 const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/document-by-pid/save', successText: string = 'Cập nhật bản ghi thành công') => {
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
 
-  await checkSuccess(page, '**/cbms-service/document-by-pid/save', 'Cập nhật bản ghi thành công');
+  await checkSuccess(page, url, successText);
 }
 
 const loginAndSearch = async (page: Page) => {

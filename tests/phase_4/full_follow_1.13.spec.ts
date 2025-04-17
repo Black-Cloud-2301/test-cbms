@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 8';
+const contractorName = 'TA autotest 9';
 
 test('save form 8', async ({page}) => {
   await loginAndSearch(page);
@@ -161,7 +161,7 @@ test('save form 11', async ({page}) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
   const subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
 
-  await saveForm(page, subDialog, '**/cbms-service/bid-evaluation/saveUnsuccessfulBidder', 'Cập nhật thông báo KQLCNT thành công');
+  await saveForm(page, subDialog);
 })
 
 test('propose bid evaluation', async ({page}) => {
@@ -234,7 +234,7 @@ test('verify bid evaluation', async ({page}) => {
   await alertSuccess.locator('.p-toast-icon-close').click();
 })
 
-const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật tờ trình phê duyệt KQLCNT thành công') => {
+const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật dữ liệu thành công') => {
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');

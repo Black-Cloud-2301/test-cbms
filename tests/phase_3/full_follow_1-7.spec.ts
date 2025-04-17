@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {IUser, USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 8';
+const contractorName = 'TA autotest 3';
 
 test('import bid evaluation', async ({page}) => {
   test.setTimeout(120000);
@@ -220,6 +220,7 @@ const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-serv
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
+  await page.pause();
 }
 
 const loginWithRoleAndSearch = async (page: Page, user: IUser) => {
