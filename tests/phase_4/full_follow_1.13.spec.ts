@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 
-const contractorName = 'TA autotest 9';
+const contractorName = 'TA autotest 8';
 
 test('save form 8', async ({page}) => {
   await loginAndSearch(page);
@@ -13,6 +13,8 @@ test('save form 8', async ({page}) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
 
   const subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo đánh giá HSDT'});
+
+  await subDialog.getByRole('button', {name: 'Tiếp'}).click();
 
   let table = subDialog.locator('app-form-table').first();
 
