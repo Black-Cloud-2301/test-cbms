@@ -1,4 +1,4 @@
-import {Page} from '@playwright/test';
+import {expect, Page} from '@playwright/test';
 import * as path from 'node:path';
 import {IUser, USERS} from '../../constants/user';
 
@@ -30,8 +30,8 @@ export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) 
       await page.context().storageState({path: authFile});
     }
     await page.waitForSelector('p-treenode', {state: 'visible'});
+    await checkUserLoad(page, user);
     await page.goto(url);
-    await page.waitForSelector('p-treenode', {state: 'visible'});
   }
 }
 
@@ -52,5 +52,38 @@ export const loginWithRole = async (page: Page, user: IUser, url: string) => {
     await page.getByRole('link', {name: 'Proceed to 10.255.58.201 ('}).click();
   }
   await page.waitForSelector('p-treenode', {state: 'visible'});
+  await checkUserLoad(page, user);
   await page.goto(url);
 };
+
+const checkUserLoad = async (page: Page, user: IUser) => {
+  const prevUrl = page.url();
+
+  // ⏳ Chờ xem trang có tự reload không (timeout thấp)
+  try {
+    await page.waitForFunction(
+      prev => location.href !== prev,
+      prevUrl,
+      { timeout: 5000 }
+    );
+    await page.waitForLoadState('load'); // đợi reload xong
+  } catch (e) {
+    // Nếu không reload trong 3s thì tiếp tục như thường
+  }
+
+  // ✅ Sau khi chắc chắn reload xong (hoặc không reload), mở popup
+  await page.locator('.header-avatar').click();
+  const personalPage = page.locator('.darkened-content');
+  await personalPage.waitFor({ state: 'visible', timeout: 5000 });
+
+  const personalContent = personalPage.locator('.personal-content-page');
+  const content = personalContent.locator('span').nth(1);
+
+  // 🔍 Xác minh nội dung user
+  await expect(content).toHaveText(`${user.code} - ${user.name}`, { timeout: 10000 });
+
+  // ❌ Đóng popup
+  await personalPage.locator('.pi.pi-times').click();
+};
+
+
