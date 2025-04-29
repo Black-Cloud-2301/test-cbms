@@ -30,6 +30,7 @@ export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) 
       await page.context().storageState({path: authFile});
     }
     await page.waitForSelector('p-treenode', {state: 'visible'});
+
     await checkUserLoad(page, user);
     await page.goto(url);
   }

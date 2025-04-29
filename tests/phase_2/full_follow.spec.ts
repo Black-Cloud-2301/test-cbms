@@ -122,7 +122,7 @@ test('import document by pid', async ({page}) => {
 
   await saveForm(page, subDialog);
 
-  await mainDialog.getByRole('button', {name: 'Đề xuất'}).click();
+  await mainDialog.getByRole('button', {name: 'Trình thẩm định'}).click();
 })
 
 test('verify', async ({page}) => {
