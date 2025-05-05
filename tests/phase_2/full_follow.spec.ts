@@ -121,7 +121,6 @@ test('import document by pid', async ({page}) => {
   // await datePickerCalendar.locator('td.p-datepicker-today').first().click();
 
   await saveForm(page, subDialog);
-
   await mainDialog.getByRole('button', {name: 'Trình thẩm định'}).click();
 })
 

@@ -7,7 +7,7 @@ export interface IUser {
 export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'MANH', IUser> = {
   NHUNG: {
     code: '435319',
-    password: 'Bear188!@#',
+    password: 'Bear199!@#',
     name: 'Giang Thị Nhung'
   },
   PC: {
@@ -22,7 +22,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'MANH', IUser> = {
   },
   TUOI: {
     code: '293289',
-    password: 'Vcc@2025',
+    password: 'Vcc@2026',
     name: 'Tô Thị Thúy Tươi'
   },
   MANH: {

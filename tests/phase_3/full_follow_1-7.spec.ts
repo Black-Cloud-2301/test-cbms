@@ -6,7 +6,7 @@ import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 const contractorName = CONTRACTOR_NAME_SEARCH;
 
 test('import bid evaluation', async ({page}) => {
-  test.setTimeout(120000);
+  test.setTimeout(180000);
 
   await login(page, '/CBMS_BID_EVALUATION', USERS.MANH);
   await search(page);
@@ -29,8 +29,202 @@ test('import bid evaluation', async ({page}) => {
 
   await loginWithRoleAndSearch(page, USERS.NHUNG);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  //   second step
 
+  //   second step
+  await saveStepSecond(page);
+
+  // Step 3
+  await saveStepThird(page);
+
+  // STEP 4
+  await saveStepFourth(page);
+
+  // STEP 5
+  await saveStepFifth(page);
+  // STEP 6
+  await saveStepSix(page);
+})
+
+test('reevaluate', async ({page}) => {
+  test.setTimeout(120000);
+
+  await login(page, '/CBMS_BID_EVALUATION', USERS.NHUNG);
+  await search(page);
+  const reEvaluateButton = page.getByRole('button', {name: 'Đánh giá lại'});
+
+  let mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  await page.waitForTimeout(1000);
+  if (await reEvaluateButton.isVisible()) {
+    await reEvaluateButton.click();
+    await page.getByRole('button', {name: 'Có'}).click();
+    let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/bid-evaluation/reevaluate/**`);
+    let resJson = await resPromise.json();
+    const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+    expect(resJson.type).toEqual('SUCCESS');
+    await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Gửi yêu cầu đánh giá lại thành công');
+    await alertSuccess.locator('.p-toast-icon-close').click();
+    await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+  }
+
+  //   second step
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  const saveBtn = mainDialog.getByRole('button', {name: 'Ghi lại'});
+  let tableRow = mainDialog.locator('tbody tr');
+  let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá tính hợp lệ'});
+  let countBidder = await tableRow.count();
+  if (await saveBtn.isVisible()) {
+    const ordinalNumbersFirst = ['1', '2.1.1', '2.1.2', '2.1.3', '2.1.4', '2.1.5', '2.1.6']
+    for (let i = 0; i < countBidder; i++) {
+      await tableRow.nth(i).getByRole('button').click();
+      for (let j = 0; j < ordinalNumbersFirst.length; j++) {
+        const number = ordinalNumbersFirst[j];
+        const cell = evaluateDialog.getByRole('cell', {name: number, exact: true}).locator('..');
+        const combo = cell.getByRole('combobox');
+        const currentValue = await combo.innerText(); // hoặc innerText() nếu là <span>
+
+        if (i === 0 && currentValue === 'Không đạt') {
+          await combo.click();
+          await page.getByRole('option', {name: 'Đạt', exact: true}).click();
+        } else if (i === 1 && currentValue === 'Đạt') {
+          await combo.click();
+          await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
+        }
+
+        await page.waitForTimeout(100);
+      }
+
+      await page.getByRole('button', {name: 'Lưu'}).click();
+    }
+    await saveForm(page, mainDialog);
+  } else {
+    await mainDialog.getByRole('button', {name: 'Đóng'}).click();
+  }
+
+  // Step 3
+  await search(page);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+
+  const ordinalNumbersSecond = ['1', '2', '3.1', '3.2', '4', '5']
+  evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá về năng lực kinh nghiệm'});
+  countBidder = await tableRow.count();
+  if (await saveBtn.isVisible()) {
+    for (let i = 0; i < countBidder; i++) {
+      await tableRow.nth(i).getByRole('button').click();
+      for (let j = 0; j < ordinalNumbersSecond.length; j++) {
+        const number = ordinalNumbersSecond[j];
+        const cell = evaluateDialog.getByRole('cell', {name: number, exact: true}).locator('..');
+        const combo = cell.getByRole('combobox');
+        const currentValue = await combo.innerText(); // hoặc innerText() nếu là <span>
+        if (currentValue === '--Chọn--') {
+          await combo.click();
+          await page.getByRole('option', {name: 'Đạt', exact: true}).click();
+        } else {
+          if (i === 1 && currentValue === 'Đạt') {
+            await combo.click();
+            await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
+          }
+        }
+        await page.waitForTimeout(100);
+      }
+      await page.getByRole('button', {name: 'Lưu'}).click();
+    }
+    await saveForm(page, mainDialog);
+  } else {
+    await mainDialog.getByRole('button', {name: 'Đóng'}).click();
+  }
+
+  // STEP 4
+  await loginWithRoleAndSearch(page, USERS.HONG);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  if (await saveBtn.isVisible()) {
+    countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      let currentRow = tableRow.nth(i);
+      let combobox = currentRow.locator('span#technicalAssessment');
+      const comboboxValue = await combobox.innerText(); // hoặc innerText() nếu là <span>
+      if (comboboxValue === '--Chọn--') {
+        await combobox.click();
+        await page.getByRole('option', {name: 'Đạt', exact: true}).click();
+      } else {
+        if (i === 1 && comboboxValue === 'Đạt') {
+          await combobox.click();
+          await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
+        }
+      }
+      await currentRow.locator('#technicalAssessmentComment').clear();
+      await currentRow.locator('#technicalAssessmentComment').fill('Nhận xét của tổ chuyên gia ' + (i + 1));
+    }
+    await saveForm(page, mainDialog);
+  } else {
+    await mainDialog.getByRole('button', {name: 'Đóng'}).click();
+  }
+
+  // STEP 5
+  await loginWithRoleAndSearch(page, USERS.TUOI);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  if (await saveBtn.isVisible()) {
+    countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      let currentRow = tableRow.nth(i);
+      if (i < countBidder - 1) {
+        await currentRow.locator('#isDiscount').first().click();
+      } else {
+        await currentRow.locator('#endowPercent').clear();
+        await currentRow.locator('#endowPercent').pressSequentially('10');
+      }
+    }
+    await page.pause();
+    await saveForm(page, mainDialog);
+  } else {
+    await mainDialog.getByRole('button', {name: 'Đóng'}).click();
+  }
+
+  // STEP 6
+  await saveStepSix(page, false, true);
+})
+
+test('run step', async ({page}) => {
+  // await saveStepFifth(page, true);
+  await saveStepSix(page, true);
+})
+
+const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/bid-evaluation/save`, successText: string = 'Lưu dữ liệu thành công') => {
+  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  let resPromise = await page.waitForResponse(url);
+  let resJson = await resPromise.json();
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
+  await alertSuccess.locator('.p-toast-icon-close').click();
+  // await page.pause();
+}
+
+const loginWithRoleAndSearch = async (page: Page, user: IUser, isNew: boolean = false) => {
+  if (isNew) {
+    await login(page, '/CBMS_BID_EVALUATION', user)
+  } else {
+    await loginWithRole(page, user, '/CBMS_BID_EVALUATION');
+  }
+  await search(page);
+}
+
+const search = async (page: Page) => {
+  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
+  await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
+  await page.waitForTimeout(500);
+  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+}
+
+const saveStepSecond = async (page: Page, isNew: boolean = false) => {
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
   let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá tính hợp lệ'});
   const tableRow = mainDialog.locator('tbody tr');
   const ordinalNumbersFirst = ['1', '2.1.1', '2.1.2', '2.1.3', '2.1.4', '2.1.5', '2.1.6']
@@ -53,15 +247,18 @@ test('import bid evaluation', async ({page}) => {
     await page.getByRole('button', {name: 'Lưu'}).click();
   }
   await saveForm(page, mainDialog);
+}
 
-  // Step 3
+const saveStepThird = async (page: Page, isNew: boolean = false) => {
   await search(page);
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  const tableRow = mainDialog.locator('tbody tr');
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
 
   const ordinalNumbersSecond = ['1', '2', '3.1', '3.2', '4', '5']
-  evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá về năng lực kinh nghiệm'});
-  countBidder = await tableRow.count();
+  let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá về năng lực kinh nghiệm'});
+  let countBidder = await tableRow.count();
   for (let i = 0; i < countBidder; i++) {
     const button = tableRow.nth(i).getByRole('button');
     if (await button.isDisabled()) {
@@ -83,16 +280,17 @@ test('import bid evaluation', async ({page}) => {
     }
     await page.getByRole('button', {name: 'Lưu'}).click();
   }
-
   await saveForm(page, mainDialog);
+}
 
-
-  // STEP 4
-  await loginWithRoleAndSearch(page, USERS.HONG);
+const saveStepFourth = async (page: Page, isNew: boolean = false) => {
+  await loginWithRoleAndSearch(page, USERS.HONG, isNew);
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  const tableRow = mainDialog.locator('tbody tr');
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  countBidder = await tableRow.count();
+  let countBidder = await tableRow.count();
   for (let i = 0; i < countBidder; i++) {
     let currentRow = tableRow.nth(i);
     let combobox = currentRow.locator('span#technicalAssessment');
@@ -108,14 +306,17 @@ test('import bid evaluation', async ({page}) => {
     await currentRow.locator('#technicalAssessmentComment').fill('Nhận xét của tổ chuyên gia ' + (i + 1));
   }
   await saveForm(page, mainDialog);
+}
 
-  // STEP 5
-  await loginWithRoleAndSearch(page, USERS.TUOI);
+const saveStepFifth = async (page: Page, isNew: boolean = false) => {
+  await loginWithRoleAndSearch(page, USERS.TUOI, isNew);
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  const tableRow = mainDialog.locator('tbody tr');
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  countBidder = await tableRow.count();
+  let countBidder = await tableRow.count();
   for (let i = 0; i < countBidder; i++) {
     let currentRow = tableRow.nth(i);
     if (i < countBidder - 1) {
@@ -126,125 +327,27 @@ test('import bid evaluation', async ({page}) => {
   }
   // await page.pause();
   await saveForm(page, mainDialog);
-
-
-  // STEP 6
-  await loginWithRoleAndSearch(page, USERS.NHUNG);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
-  await mainDialog.getByRole('button', {name: 'Chọn file'});
-
-  await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
-  await mainDialog.getByRole('button', {name: 'Hoàn thành đánh giá'}).click();
-
-  resPromise = await page.waitForResponse(`**${CBMS_MODULE}/bid-evaluation/save`);
-  resJson = await resPromise.json();
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-})
-
-test('reevaluate', async ({page}) => {
-  test.setTimeout(120000);
-
-  await login(page, '/CBMS_BID_EVALUATION', USERS.NHUNG);
-  await search(page);
-  await page.getByRole('button', {name: 'Đánh giá lại'}).click();
-  await page.getByRole('button', {name: 'Có'}).click();
-  let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/bid-evaluation/reevaluate/**`);
-  let resJson = await resPromise.json();
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Gửi yêu cầu đánh giá lại thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  //   second step
-  await saveForm(page, mainDialog);
-
-
-  // Step 3
-  await search(page);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
-  await saveForm(page, mainDialog);
-
-
-  // STEP 4
-  await loginWithRoleAndSearch(page, USERS.HONG);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
-  await page.pause();
-  await saveForm(page, mainDialog);
-
-
-  // STEP 5
-  await loginWithRoleAndSearch(page, USERS.TUOI);
-
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
-  await saveForm(page, mainDialog);
-
-
-  // STEP 6
-  await saveStepSix(page);
-})
-
-test('run step', async ({page}) => {
-  await saveStepSix(page, true);
-})
-
-const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/bid-evaluation/save`, successText: string = 'Lưu dữ liệu thành công') => {
-  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
-
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-  let resPromise = await page.waitForResponse(url);
-  let resJson = await resPromise.json();
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
-  await alertSuccess.locator('.p-toast-icon-close').click();
-  // await page.pause();
 }
 
-const loginWithRoleAndSearch = async (page: Page, user: IUser, isNew: boolean = false) => {
-  if(isNew) {
-    await login(page, '/CBMS_BID_EVALUATION', user)
-  } else {
-    await loginWithRole(page, user, '/CBMS_BID_EVALUATION');
-  }
-  await search(page);
-}
-
-const search = async (page: Page) => {
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
-  await page.waitForTimeout(500);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
-}
-
-const saveStepSix = async (page: Page, isNew: boolean = false) => {
+const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boolean = false) => {
   await loginWithRoleAndSearch(page, USERS.NHUNG, isNew);
 
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.waitForTimeout(200);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.waitForTimeout(200);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.waitForTimeout(200);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+
+  await mainDialog.getByRole('button', {name: 'Chọn file'});
+
+  if(!reevaluate) {
+    await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
+  }
+
   // await page.pause();
   await mainDialog.getByRole('button', {name: 'Hoàn thành đánh giá'}).click();
 

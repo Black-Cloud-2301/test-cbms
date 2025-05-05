@@ -1,8 +1,9 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
+import {CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
-const contractorName = 'TA autotest 8';
+const contractorName = CONTRACTOR_NAME_SEARCH;
 
 test('save form 8', async ({page}) => {
   await loginAndSearch(page);
@@ -129,7 +130,7 @@ test('save form 9', async ({page}) => {
       const row = tableRow.nth(i);
       await subDialog.locator('form span').nth(1).click();
 
-      await page.waitForResponse(response => response.url().includes('/cbms-service/sysUser/search') && response.status() === 200);
+      await page.waitForResponse(response => response.url().includes('/sysUser/search') && response.status() === 200);
       await selectUserDialog.getByRole('row').nth(1).locator('a').click();
       await row.locator('span[role=combobox]#role').click();
       if (i === 0) {
@@ -171,7 +172,7 @@ test('propose bid evaluation', async ({page}) => {
 
   await page.getByRole('button', {name: 'Đề xuất'}).click();
 
-  let resPromise = await page.waitForResponse('**/cbms-service/document-by-pid/propose');
+  let resPromise = await page.waitForResponse('**/document-by-pid/propose');
   let resJson = await resPromise.json();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
@@ -185,7 +186,7 @@ test('verify bid evaluation', async ({page}) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
+  await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
@@ -226,7 +227,7 @@ test('verify bid evaluation', async ({page}) => {
 
   await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
 
-  let resPromise = await page.waitForResponse('**/cbms-service/document-by-pid/confirm');
+  let resPromise = await page.waitForResponse('**/document-by-pid/confirm');
   let resJson = await resPromise.json();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
@@ -236,7 +237,7 @@ test('verify bid evaluation', async ({page}) => {
   await alertSuccess.locator('.p-toast-icon-close').click();
 })
 
-const saveForm = async (page: Page, dialog: Locator, url: string = '**/cbms-service/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật dữ liệu thành công') => {
+const saveForm = async (page: Page, dialog: Locator, url: string = '**/bid-evaluation/saveEvaluateHsdt', successText: string = 'Cập nhật dữ liệu thành công') => {
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
@@ -251,6 +252,6 @@ const loginAndSearch = async (page: Page) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID');
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/cbms-service/contractor/doSearch') && response.status() === 200);
+  await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 }
