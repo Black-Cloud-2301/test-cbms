@@ -6,17 +6,18 @@ const authFile = path.join(__dirname, '..', 'state.json');
 
 export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) => {
   await page.goto('http://localhost:8080/');
-  await page.waitForTimeout(1000);
   if (page.url().startsWith('chrome-error://chromewebdata/')) {
     await page.getByRole('button', {name: 'Advanced'}).click();
     await page.getByRole('link', {name: 'Proceed to 10.255.58.201 ('}).click();
     await page.waitForTimeout(2000);
     if (page.url().startsWith('http://localhost:8080/')) {
       await page.waitForSelector('p-treenode', {state: 'visible'});
+      await page.waitForTimeout(2000);
       await page.locator('.header-avatar').click();
       const personalPage = page.locator('.darkened-content');
       const personalContent = personalPage.locator('.personal-content-page');
       const content = await personalContent.locator('span').nth(1).innerText();
+      // await page.pause();
       if (!content.includes(user.code + ' - ' + user.name)) {
         await loginWithRole(page, user, 'http://localhost:8080/');
       } else {
@@ -65,7 +66,7 @@ const checkUserLoad = async (page: Page, user: IUser) => {
     await page.waitForFunction(
       prev => location.href !== prev,
       prevUrl,
-      { timeout: 5000 }
+      {timeout: 5000}
     );
     await page.waitForLoadState('load'); // đợi reload xong
   } catch (e) {
@@ -75,13 +76,13 @@ const checkUserLoad = async (page: Page, user: IUser) => {
   // ✅ Sau khi chắc chắn reload xong (hoặc không reload), mở popup
   await page.locator('.header-avatar').click();
   const personalPage = page.locator('.darkened-content');
-  await personalPage.waitFor({ state: 'visible', timeout: 5000 });
+  await personalPage.waitFor({state: 'visible', timeout: 5000});
 
   const personalContent = personalPage.locator('.personal-content-page');
   const content = personalContent.locator('span').nth(1);
 
   // 🔍 Xác minh nội dung user
-  await expect(content).toHaveText(`${user.code} - ${user.name}`, { timeout: 10000 });
+  await expect(content).toHaveText(`${user.code} - ${user.name}`, {timeout: 10000});
 
   // ❌ Đóng popup
   await personalPage.locator('.pi.pi-times').click();

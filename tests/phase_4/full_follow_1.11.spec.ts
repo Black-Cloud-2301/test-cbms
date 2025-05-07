@@ -164,7 +164,7 @@ test('import document by pid 3.1.11', async ({page}) => {
 
   await saveForm(page, subDialog);
 
-  await mainDialog.getByRole('button', {name: 'Đề xuất'}).click();
+  await mainDialog.getByRole('button', {name: 'Trình thẩm định'}).click();
 })
 
 
@@ -174,11 +174,6 @@ test('verify', async ({page}) => {
 
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
-
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
 

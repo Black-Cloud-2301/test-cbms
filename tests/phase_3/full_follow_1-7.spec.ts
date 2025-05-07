@@ -4,7 +4,7 @@ import {IUser, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
 const contractorName = CONTRACTOR_NAME_SEARCH;
-
+const totalImport = 6;
 test('import bid evaluation', async ({page}) => {
   test.setTimeout(180000);
 
@@ -28,8 +28,8 @@ test('import bid evaluation', async ({page}) => {
   await saveForm(page, mainDialog);
 
   await loginWithRoleAndSearch(page, USERS.NHUNG);
+  await checkCountBidder(page, 0);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
   //   second step
   await saveStepSecond(page);
 
@@ -179,7 +179,6 @@ test('reevaluate', async ({page}) => {
         await currentRow.locator('#endowPercent').pressSequentially('10');
       }
     }
-    await page.pause();
     await saveForm(page, mainDialog);
   } else {
     await mainDialog.getByRole('button', {name: 'Đóng'}).click();
@@ -253,6 +252,7 @@ const saveStepThird = async (page: Page, isNew: boolean = false) => {
   await search(page);
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
   const tableRow = mainDialog.locator('tbody tr');
+  await checkCountBidder(page, 1);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
 
@@ -287,6 +287,7 @@ const saveStepFourth = async (page: Page, isNew: boolean = false) => {
   await loginWithRoleAndSearch(page, USERS.HONG, isNew);
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
   const tableRow = mainDialog.locator('tbody tr');
+  await checkCountBidder(page, 2);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -312,6 +313,7 @@ const saveStepFifth = async (page: Page, isNew: boolean = false) => {
   await loginWithRoleAndSearch(page, USERS.TUOI, isNew);
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
   const tableRow = mainDialog.locator('tbody tr');
+  await checkCountBidder(page, 3);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -333,6 +335,7 @@ const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boole
   await loginWithRoleAndSearch(page, USERS.NHUNG, isNew);
 
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  await checkCountBidder(page, 4);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await page.waitForTimeout(200);
@@ -344,11 +347,10 @@ const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boole
 
   await mainDialog.getByRole('button', {name: 'Chọn file'});
 
-  if(!reevaluate) {
+  if (!reevaluate) {
     await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
   }
 
-  // await page.pause();
   await mainDialog.getByRole('button', {name: 'Hoàn thành đánh giá'}).click();
 
 
@@ -358,4 +360,44 @@ const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boole
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
+}
+
+const checkCountBidder = async (page: Page, step: number) => {
+  // await page.pause();
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  const tableRow = mainDialog.locator('tbody tr').first();
+  switch (step) {
+    case 0:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      break;
+    case 1:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      break;
+    case 2:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 2} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      break;
+    case 3:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - 2}/${totalImport - 2} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 3} nhà thầu`)
+      break;
+    case 4:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - 2}/${totalImport - 2} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - 3}/${totalImport - 3} nhà thầu`)
+      break;
+    default:
+      break;
+  }
 }
