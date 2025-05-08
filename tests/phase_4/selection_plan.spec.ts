@@ -1,5 +1,5 @@
 import {expect, Locator, Page, test} from '@playwright/test';
-import {login, loginWithRole} from '../login';
+import {login} from '../login';
 import {USERS} from '../../constants/user';
 import {
   fillNumber,
@@ -13,6 +13,7 @@ import {
 const NO = 1;
 const SELECTION_PLAN_NAME = `TA autotest kế hoạch lựa chọn nhà thầu ${NO}`;
 const POLICY_NAME = `TA autotest chủ trương 1 DC 1`;
+const PURCHASE_NAME = `TA autotest đề xuất mua sắm 2`;
 
 test('create selection_plan/ new package/ investment project', async ({page}) => {
   const totalValue = 10000000;
@@ -29,8 +30,8 @@ test('create selection_plan/ new package/ investment project', async ({page}) =>
   await selectOption(page, mainDialog, 'inputSource', '1. Dự án đầu tư');
   await fillText(mainDialog, 'contractorSelectionPlanName', SELECTION_PLAN_NAME);
   await selectAutocompleteMulti(page, mainDialog, 'Mã chủ trương', 'Tìm kiếm chủ trương', POLICY_NAME, 'policy/doSearchLastVersion');
-  await fillNumber(mainDialog, 'totalValue', ''+totalValue);
-  await fillNumber(mainDialog, 'packageCount', ''+packageCount);
+  await fillNumber(mainDialog, 'totalValue', '' + totalValue);
+  await fillNumber(mainDialog, 'packageCount', '' + packageCount);
   await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST_${NO}`);
   await selectDate(page, mainDialog, 'decisionApprovalDate');
   await selectFile(mainDialog, 'assets/files/sample.pdf');
@@ -57,6 +58,71 @@ test('create selection_plan/ new package/ investment project', async ({page}) =>
     if (i === packageCount - 1) {
       value = totalValue - usedValue;
       await fillNumber(mainDialog, 'contractorPrice', value.toString());
+    }
+    usedValue += value;
+    await page.waitForTimeout(500);
+    await packageDialog.getByRole('button', {name: 'Ghi lại'}).click();
+  }
+
+  await saveForm({page, dialog: mainDialog});
+});
+
+test('create selection_plan/ new package/ shopping', async ({page}) => {
+  const totalValue = 1000000;
+  const packageCount = 3;
+  const unit = 100_000;
+
+  const baseValue = Math.floor(totalValue / packageCount / unit) * unit;
+  let usedValue = 0;
+
+  await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN', USERS.NHUNG);
+  await page.getByRole('button', {name: 'Thêm mới'}).click();
+  const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
+  await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
+  await selectOption(page, mainDialog, 'inputSource', '2. Mua sắm thường xuyên');
+  await fillText(mainDialog, 'contractorSelectionPlanName', 'Mua sắm ' + SELECTION_PLAN_NAME);
+
+  await mainDialog.locator('input[formcontrolname="purchaseRequestCode"]').click({force: true});
+  const selectPurchaseDialog = page.getByRole('dialog', {name: 'Chọn đề xuất mua sắm'});
+  await selectAutocompleteMulti(page, selectPurchaseDialog, 'Chọn đề xuất mua sắm', 'Tìm kiếm mã đề xuất mua sắm', PURCHASE_NAME, 'purchase/search-purchase');
+  let tableRow = selectPurchaseDialog.locator('tbody tr');
+  let rowCount = await tableRow.count();
+  for (let i = 0; i < rowCount; i++) {
+    const row = tableRow.nth(i);
+    await fillNumber(row, 'propositionPurchasePriceUse', '1000000');
+  }
+  await page.pause();
+  await page.getByRole('button', {name: 'Ghi lại'}).click();
+  await fillNumber(mainDialog, 'totalValue', '' + totalValue);
+  await fillNumber(mainDialog, 'packageCount', '' + packageCount);
+  await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST_MUA_SAM_${NO}`);
+  await selectDate(page, mainDialog, 'decisionApprovalDate');
+  await selectFile(mainDialog, 'assets/files/sample.pdf');
+  await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
+  tableRow = mainDialog.locator('tbody tr');
+  rowCount = await tableRow.count();
+  const packageDialog = page.getByRole('dialog', {name: 'Thêm mới gói thầu'});
+  expect(rowCount > 2);
+  for (let i = 0; i < rowCount; i++) {
+    let value = baseValue;
+    const row = tableRow.nth(i);
+    await row.getByTitle('Thêm', {exact: true}).click();
+    await selectFile(packageDialog, 'assets/files/bieu_mau_tao_goi_thau.xlsx', '.xls, .xlsx')
+    await packageDialog.getByRole('button', {name: 'Tải lên'}).click();
+    const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+    await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import thành công');
+    await alertSuccess.locator('.p-toast-icon-close').click();
+    await fillText(mainDialog, 'contractorName', ` gói thầu ${i + 1}`);
+    await fillText(mainDialog, 'decisionNumber', `SO_QD_PD_DT_GT_${i + 1}`);
+    await selectDate(page, mainDialog, 'decisionApprovalDate');
+    await selectFile(mainDialog, 'assets/files/sample.pdf', '.pdf,.doc,.docx');
+    if (i === packageCount - 1) {
+      value = totalValue - usedValue;
+      await fillNumber(mainDialog, 'contractorPrice', value.toString());
+      await fillNumber(mainDialog, 'projectApprovalValue', value.toString());
+    } else {
+      await fillNumber(mainDialog, 'contractorPrice', baseValue.toString());
+      await fillNumber(mainDialog, 'projectApprovalValue', value.toString());
     }
     usedValue += value;
     await page.waitForTimeout(500);
@@ -127,7 +193,7 @@ const saveForm = async ({
                           page,
                           dialog,
                           buttonName = 'Ghi lại',
-                          url = '**/selection_plan/create',
+                          url = '**/contractor_selection_plan/create',
                           successText = 'Thêm mới kế hoạch lựa chọn nhà thầu thành công'
                         }: SaveFormOptions) => {
   await dialog.getByRole('button', {name: buttonName}).click();

@@ -3,18 +3,20 @@ import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
 import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
 
-const NO = 1;
-const PURCHASE_NAME = `TA autotest đề xuất mua sắm ${NO}`;
+const PURCHASE_NAME = `TA autotest đề xuất mua sắm`;
 
 test('create purchase', async ({page}) => {
   await login(page, '/CBMS_PURCHASE_PROPOSAL', USERS.NHUNG);
+  await search(page);
   await page.getByRole('button', {name: 'Thêm mới'}).click();
   const mainDialog = page.getByRole('dialog', {name: 'Tạo mới đề xuất mua sắm'});
-  await fillText(mainDialog, 'purchaseRequestName', PURCHASE_NAME);
+  let tableRow = page.locator('tbody tr');
+  let rowCount = await tableRow.count();
+  await fillText(mainDialog, 'purchaseRequestName', PURCHASE_NAME + ` ${rowCount + 1}`);
   await fillText(mainDialog, 'procurementProposalContent', 'Mua cả thế giới');
   await fillNumber(mainDialog, 'propositionPurchasePrice', '1000000');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  await fillText(mainDialog, 'procurementProposalDocumentNumber', `SO_VB_DXMS_TA_AUTOTEST_${NO}`);
+  await fillText(mainDialog, 'procurementProposalDocumentNumber', `SO_VB_DXMS_TA_AUTOTEST_${rowCount + 1}`);
   await selectDate(page, mainDialog, 'decisionDay');
   await selectOption(page, mainDialog, 'approvalLevel', '1. HĐQT');
   await selectFile(mainDialog, 'assets/files/sample.pdf');

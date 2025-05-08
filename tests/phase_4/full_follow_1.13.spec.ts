@@ -170,7 +170,7 @@ test('save form 11', async ({page}) => {
 test('propose bid evaluation', async ({page}) => {
   await loginAndSearch(page);
 
-  await page.getByRole('button', {name: 'Đề xuất'}).click();
+  await page.getByRole('button', {name: 'Trình thẩm định'}).click();
 
   let resPromise = await page.waitForResponse('**/document-by-pid/propose');
   let resJson = await resPromise.json();
@@ -178,7 +178,7 @@ test('propose bid evaluation', async ({page}) => {
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
 
   expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đề xuất thành công');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Trình thẩm định thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
 })
 
@@ -225,6 +225,7 @@ test('verify bid evaluation', async ({page}) => {
     await row.locator('input#note').fill('Chú thích ' + (i + 1))
   }
 
+  await page.pause();
   await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
 
   let resPromise = await page.waitForResponse('**/document-by-pid/confirm');
