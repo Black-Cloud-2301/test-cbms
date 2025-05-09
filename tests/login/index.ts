@@ -1,16 +1,17 @@
 import {expect, Page} from '@playwright/test';
 import * as path from 'node:path';
 import {IUser, USERS} from '../../constants/user';
+import {URL} from '../../constants/common';
 
 const authFile = path.join(__dirname, '..', 'state.json');
 
 export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) => {
-  await page.goto('http://localhost:8080/');
+  await page.goto('');
   if (page.url().startsWith('chrome-error://chromewebdata/')) {
     await page.getByRole('button', {name: 'Advanced'}).click();
     await page.getByRole('link', {name: 'Proceed to 10.255.58.201 ('}).click();
     await page.waitForTimeout(2000);
-    if (page.url().startsWith('http://localhost:8080/')) {
+    if (page.url().startsWith(URL)) {
       await page.waitForSelector('p-treenode', {state: 'visible'});
       await page.waitForTimeout(2000);
       await page.locator('.header-avatar').click();
@@ -19,7 +20,7 @@ export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) 
       const content = await personalContent.locator('span').nth(1).innerText();
       // await page.pause();
       if (!content.includes(user.code + ' - ' + user.name)) {
-        await loginWithRole(page, user, 'http://localhost:8080/');
+        await loginWithRole(page, user, '');
       } else {
         await personalPage.locator('.pi.pi-times').click();
       }
@@ -27,7 +28,7 @@ export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) 
       await page.locator('#username').fill(user.code);
       await page.locator('#password').fill(user.password);
       await page.getByRole('button', {name: 'ĐĂNG NHẬP'}).click();
-      await page.waitForURL('http://localhost:8080/home-page');
+      await page.waitForURL(`${URL}/home-page`);
       await page.context().storageState({path: authFile});
     }
     await page.waitForSelector('p-treenode', {state: 'visible'});

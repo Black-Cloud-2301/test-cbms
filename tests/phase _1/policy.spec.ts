@@ -6,6 +6,7 @@ import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../
 const POLICY_NAME = `TA autotest chủ trương`;
 
 test('create policy full flow', async ({page}) => {
+  test.setTimeout(180000);
   await login(page, '/BIDDING_POLICY', USERS.NHUNG);
   await search(page);
   await page.getByRole('button', {name: 'Thêm mới'}).click();
@@ -153,6 +154,7 @@ const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: string)
   await fillText(mainDialog, 'projectLocation', 'Hồ Tây');
   await fillText(mainDialog, 'note', 'Của Tú Ank đừng đụng zô');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
+  await page.pause()
   await fillText(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'policyDate');
   await selectOption(page, mainDialog, 'approvedBy', '1. HĐQT');

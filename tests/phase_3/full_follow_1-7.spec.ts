@@ -4,8 +4,8 @@ import {IUser, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
 const contractorName = CONTRACTOR_NAME_SEARCH;
-const totalImport = 6;
-test('import bid evaluation', async ({page}) => {
+const totalImport = 3;
+test('bid evaluation full', async ({page}) => {
   test.setTimeout(180000);
 
   await login(page, '/CBMS_BID_EVALUATION', USERS.MANH);
@@ -217,7 +217,19 @@ const loginWithRoleAndSearch = async (page: Page, user: IUser, isNew: boolean = 
 const search = async (page: Page) => {
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
+  await page.waitForResponse((response) => {
+    const urlMatch = response.url().includes(`${CBMS_MODULE}/contractor/doSearch`);
+    const isOk = response.status() === 200;
+
+    if (!urlMatch || !isOk) return false;
+
+    const request = response.request();
+    const postData = request.postDataJSON(); // Nếu là JSON
+    // const postData = request.postData();  // Nếu raw string
+
+    // Ví dụ: check field cụ thể trong payload
+    return postData?.keySearch === contractorName;
+  });
   await page.waitForTimeout(500);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 }

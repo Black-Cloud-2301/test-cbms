@@ -4,7 +4,7 @@ import {USERS} from '../../constants/user';
 import {fillText, selectAutocompleteMulti, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
 
 const PROJECT_NAME = `TA autotest dự án`;
-const POLICY_NAME = `TA autotest chủ trương`;
+const POLICY_NAME = `TA autotest chủ trương 5 DC 1`;
 
 test('create project full flow', async ({page}) => {
   test.setTimeout(180000);
@@ -107,7 +107,6 @@ const createProject = async (page: Page, mainDialog: Locator, nameSearch?: strin
   await fillText(mainDialog, 'projectName', nameSearch);
   await selectAutocompleteMulti(page, mainDialog, 'Chủ trương', 'Tìm kiếm chủ trương', POLICY_NAME, 'policy/doSearchDistinct');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  await page.pause();
   await fillText(mainDialog, 'projectDecisionNumber', `QD_PD_DA_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'projectDate');
   await selectFile(mainDialog, 'assets/files/sample.pdf');
@@ -172,7 +171,7 @@ const appraisal = async (page: Page, nameSearch?: string) => {
 
 const adjustment = async (page: Page, nameSearch?: string) => {
   if (nameSearch) {
-    await loginWithRole(page, USERS.PC, '/BIDDING_PROJECT')
+    await loginWithRole(page, USERS.NHUNG, '/BIDDING_PROJECT')
     await search(page, nameSearch);
   }
 
@@ -182,7 +181,7 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   const row = tableRow.first();
   await row.getByTitle('Điều chỉnh dự án', {exact: true}).click();
   const mainDialog = page.getByRole('dialog', {name: 'Điều chỉnh thông tin dự án'});
-  await fillText(mainDialog, 'projectName', `${PROJECT_NAME} DC ${rowCount}`);
+  await fillText(mainDialog, 'projectName', `${nameSearch} DC ${rowCount}`);
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'projectDecisionNumber', `QD_DC_DA_TA_AUTOTEST_${rowCount + 1}_DC`);
   await selectDate(page, mainDialog, 'projectDate');
