@@ -2,32 +2,249 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
 import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
+import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
+import {URL_BE_BASE} from '../../constants/common';
+import {saveFileParam, setupAppParams} from '../../utils/params.utils';
+import {APP_PARAMS} from '../../constants/common/app-param.constants';
+import {validatePolicyTable} from '../../constants/validate-table/policy.constants';
+import {IAppParam} from '../../constants/interface';
 
 const POLICY_NAME = `TA autotest chủ trương`;
 
-test('create policy full flow', async ({page}) => {
-  test.setTimeout(180000);
-  await login(page, '/BIDDING_POLICY', USERS.NHUNG);
-  await search(page);
-  await page.getByRole('button', {name: 'Thêm mới'}).click();
-  const mainDialog = page.getByRole('dialog', {name: 'Tạo mới chủ trương'});
-  let tableRow = page.locator('tbody tr');
-  let rowCount = await tableRow.count();
-  let count = 1;
-  if (rowCount > 0) {
-    const row = tableRow.first();
-    const oldName = await row.locator('td').nth(3).innerText();
-    const match = oldName.match(/chủ trương (\d+)/i);
-    count = match ? parseInt(match[1]) + 1 : 1;
-  }
-  const nameSearch = POLICY_NAME + ` ${count}`
-  await createPolicy(page, mainDialog, nameSearch);
-  await submitToAppraisal(page, nameSearch);
-  await appraisal(page, nameSearch);
-  await adjustment(page, nameSearch);
-  await submitToAppraisal(page, nameSearch + ` DC 1`);
-  await appraisal(page, nameSearch + ` DC 1`);
-});
+test.describe('test policy', () => {
+  test('create policy full flow', async ({page}) => {
+    test.setTimeout(180000);
+    await login(page, '/BIDDING_POLICY', USERS.NHUNG);
+    await search(page);
+    await page.getByRole('button', {name: 'Thêm mới'}).click();
+    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới chủ trương'});
+    let tableRow = page.locator('tbody tr');
+    let rowCount = await tableRow.count();
+    let count = 1;
+    if (rowCount > 0) {
+      const row = tableRow.first();
+      const oldName = await row.locator('td').nth(3).innerText();
+      const match = oldName.match(/chủ trương (\d+)/i);
+      count = match ? parseInt(match[1]) + 1 : 1;
+    }
+    const nameSearch = POLICY_NAME + ` ${count}`
+    await createPolicy(page, mainDialog, nameSearch);
+    await submitToAppraisal(page, nameSearch);
+    await appraisal(page, nameSearch);
+    await adjustment(page, nameSearch);
+    await submitToAppraisal(page, nameSearch + ` DC 1`);
+    await appraisal(page, nameSearch + ` DC 1`);
+  });
+
+  test('search form', async ({page}) => {
+    test.setTimeout(180000);
+    await login(page, '/BIDDING_POLICY');
+    let searchValue: string | number | number[] = 'autotest';
+    let locator = page.locator('input#keySearch');
+
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      searchObject: {keySearch: searchValue},
+      validateInput: {locator, searchValue},
+      conditions: [{fields: ['policyCode', 'policyName'], value: searchValue}]
+    });
+    await locator.clear();
+
+    locator = page.locator('input#totalInvestmentFrom');
+    searchValue = 10000000;
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      searchObject: {totalInvestmentFrom: searchValue},
+      type: 'CURRENCY',
+      validateInput: {locator, searchValue, maxLength: 13},
+      conditions: [{fields: ['totalInvestment'], value: searchValue, match: 'MORE_THAN_EQUAL'}]
+    });
+    await locator.clear();
+
+    locator = page.locator('input#totalInvestmentTo');
+    searchValue = 100000000;
+
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      searchObject: {totalInvestmentTo: searchValue},
+      type: 'CURRENCY',
+      validateInput: {locator, searchValue, maxLength: 13},
+      conditions: [{fields: ['totalInvestment'], value: searchValue, match: 'LESS_THAN_EQUAL'}]
+    });
+    await locator.clear();
+
+    locator = page.locator('div#statusList');
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      type: 'MULTI_SELECT',
+      validateInput: {locator},
+      searchObject: {statusList: null},
+      conditions: [{fields: ['status']}]
+    });
+    await locator.locator('timesicon').locator('svg').click();
+
+    locator = page.locator('div#projectGroupIdList');
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      type: 'MULTI_SELECT',
+      validateInput: {locator},
+      searchObject: {projectGroupIdList: null},
+      conditions: [{fields: ['projectGroupId']}]
+    });
+    await locator.locator('timesicon').locator('svg').click();
+
+    locator = page.locator('div#projectTypeIdList');
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      type: 'MULTI_SELECT',
+      validateInput: {locator},
+      searchObject: {projectTypeIdList: null},
+      conditions: [{fields: ['projectTypeId']}]
+    });
+
+    locator = page.locator('div#investmentFieldIdList');
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      type: 'MULTI_SELECT',
+      validateInput: {locator},
+      searchObject: {investmentFieldIdList: null},
+      conditions: [{fields: ['investmentFieldId']}]
+    });
+    await locator.locator('timesicon').locator('svg').click();
+    await page.locator('div#projectTypeIdList').locator('timesicon').locator('svg').click();
+
+    locator = page.locator('div#searchPage');
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      type: 'AUTOCOMPLETE_MULTI',
+      validateInput: {
+        locator,
+        searchValue: 'Giang Thị Nhung',
+        title: 'Người tạo',
+        dialogTitle: 'Tìm kiếm người tạo',
+        apiUrl: 'sysUser/search'
+      },
+      searchObject: {createdBy: 950095745},
+      conditions: [{fields: ['createdBy'], value: 950095745, match: 'EXACT'}]
+    });
+    await locator.locator('input[name="createdBy"]').clear();
+
+    locator = page.locator('div#searchPage');
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      type: 'AUTOCOMPLETE_MULTI',
+      validateInput: {
+        locator,
+        searchValue: 'Trung tâm Cẩm Mỹ - Xuân Lộc',
+        title: 'Đơn vị tạo',
+        dialogTitle: 'Tìm kiếm đơn vị tạo',
+        apiUrl: 'sysGroup/search'
+      },
+      searchObject: {sysGroupId: 9008106},
+      conditions: [{fields: ['sysGroupId'], value: 9008106, match: 'EXACT'}]
+    });
+    await locator.locator('input[name="sysGroupId"]').clear();
+
+    locator = page.locator('div#searchPage');
+    const now = new Date();
+    searchValue = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth()).toString().padStart(2, '0')}/${now.getFullYear()}`;
+
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      searchObject: {createdAtFrom: searchValue},
+      type: 'DATE',
+      validateInput: {locator, searchValue},
+      conditions: [{fields: ['createdAt'], value: searchValue, match: 'MORE_THAN_EQUAL'}]
+    });
+
+    locator = page.locator('div#searchPage');
+    searchValue = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
+
+    await checkSearchResponse({
+      page,
+      url: URL_BE_BASE + '/policy/doSearch',
+      searchObject: {createdAtTo: searchValue},
+      type: 'DATE',
+      validateInput: {locator, searchValue},
+      conditions: [{fields: ['createdAt'], value: searchValue, match: 'LESS_THAN_EQUAL'}]
+    });
+  })
+
+
+  test('table pageable - ID từ response không trùng', async ({page}) => {
+    await login(page, '/BIDDING_POLICY');
+
+    const pageable = page.locator('span.p-paginator-pages');
+    const pageButtons = pageable.locator('button');
+    const seenIds = new Set<string>();
+
+    const pageCount = await pageButtons.count();
+
+    for (let i = 0; i < pageCount; i++) {
+      const [res] = await Promise.all([
+        page.waitForResponse(res =>
+          res.url().includes('/policy/doSearch') && res.status() === 200
+        ),
+        pageButtons.nth(i).click()
+      ]);
+
+      const responseData = await res.json();
+      const items = responseData.data?.content ?? responseData.data.content ?? responseData.data ?? [];
+
+      for (const item of items) {
+        const id = String(item.id); // đảm bảo là string để Set hoạt động ổn định
+        const isDuplicate = seenIds.has(id);
+
+        // ✅ Expect: không được trùng
+        if (isDuplicate) {
+          console.log(`🔴 Trùng ID '${id}' tại trang ${i + 1}`);
+          await page.pause();
+          expect(isDuplicate).toBeFalsy();
+        }
+
+        seenIds.add(id);
+      }
+    }
+
+    await page.getByRole('combobox', {name: 'Rows per page'}).click();
+    await page.getByRole('option', {name: '100'}).click();
+    const res = await page.waitForResponse(res =>
+      res.url().includes('/policy/doSearch') && res.status() === 200
+    )
+    const responseData = await res.json();
+    expect(responseData.type).toEqual('SUCCESS');
+    const totalElements = await responseData.data?.totalElements;
+    expect(totalElements).toEqual(responseData.data?.totalElements);
+
+    let tableRow = page.locator('tbody tr');
+    let countBidder = await tableRow.count();
+
+    if (totalElements > 100) {
+      expect(countBidder).toEqual(100);
+    } else {
+      expect(countBidder).toEqual(totalElements);
+    }
+  });
+
+  test('table visible', async ({page}) => {
+    const dataByParType: Record<string, IAppParam[]> = APP_PARAMS;
+    await setupAppParams(page, dataByParType);
+    await login(page, '/BIDDING_POLICY');
+    await saveFileParam(page, dataByParType);
+
+    await validateDataTable(page, validatePolicyTable, dataByParType);
+  });
+})
 
 test('create policy', async ({page}) => {
     await login(page, '/BIDDING_POLICY', USERS.NHUNG);
@@ -154,7 +371,6 @@ const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: string)
   await fillText(mainDialog, 'projectLocation', 'Hồ Tây');
   await fillText(mainDialog, 'note', 'Của Tú Ank đừng đụng zô');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  await page.pause()
   await fillText(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'policyDate');
   await selectOption(page, mainDialog, 'approvedBy', '1. HĐQT');

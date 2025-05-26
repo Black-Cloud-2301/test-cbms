@@ -59,9 +59,14 @@ export const selectOption = async (page: Page, locator: Locator, id: string, val
 export const selectDate = async (page: Page, locator: Locator, id: string, value?: string) => {
   const currentInput = locator.locator(`input[name="${id}"]`);
   const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
+  const timesIcon = currentInput.locator('..').locator('timesicon.p-calendar-clear-icon')
+  if(await timesIcon.isVisible()) {
+    await timesIcon.click();
+  }
   if (value) {
+    await currentInput.clear();
     await currentInput.pressSequentially(value);
-    await datePickerCalendar.locator('span.p-highlight').first().click();
+    // await datePickerCalendar.locator('span.p-highlight').first().click();
   } else {
     await currentInput.click();
     await datePickerCalendar.locator('td.p-datepicker-today').first().click();

@@ -1,17 +1,17 @@
 import {expect, Page} from '@playwright/test';
 import * as path from 'node:path';
 import {IUser, USERS} from '../../constants/user';
-import {URL} from '../../constants/common';
+import {URL_BASE} from '../../constants/common';
 
 const authFile = path.join(__dirname, '..', 'state.json');
 
-export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) => {
+export const login = async (page: Page, url?: string, user: IUser = USERS.NHUNG) => {
   await page.goto('');
   if (page.url().startsWith('chrome-error://chromewebdata/')) {
     await page.getByRole('button', {name: 'Advanced'}).click();
     await page.getByRole('link', {name: 'Proceed to 10.255.58.201 ('}).click();
     await page.waitForTimeout(2000);
-    if (page.url().startsWith(URL)) {
+    if (page.url().startsWith(URL_BASE)) {
       await page.waitForSelector('p-treenode', {state: 'visible'});
       await page.waitForTimeout(2000);
       await page.locator('.header-avatar').click();
@@ -28,13 +28,14 @@ export const login = async (page: Page, url: string, user: IUser = USERS.NHUNG) 
       await page.locator('#username').fill(user.code);
       await page.locator('#password').fill(user.password);
       await page.getByRole('button', {name: 'ĐĂNG NHẬP'}).click();
-      await page.waitForURL(`${URL}/home-page`);
+      await page.waitForURL(`${URL_BASE}/home-page`);
       await page.context().storageState({path: authFile});
     }
     await page.waitForSelector('p-treenode', {state: 'visible'});
 
     await checkUserLoad(page, user);
-    await page.goto(url);
+    if (url)
+      await page.goto(url);
   }
 }
 

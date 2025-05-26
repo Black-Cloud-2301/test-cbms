@@ -4,7 +4,7 @@ export interface IUser {
   name: string;
 }
 
-export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'MANH', IUser> = {
+export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MANH', IUser> = {
   NHUNG: {
     code: '435319',
     password: 'Bear199!@#',
@@ -20,6 +20,11 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'MANH', IUser> = {
     password: 'CNTT2025a@*HH',
     name: 'Bùi Thị Hồng'
   },
+  CAM_NHUNG: {
+    code: '455651',
+    password: 'Thang5nam25@',
+    name: 'Nguyễn Thị Cẩm Nhung'
+  },
   TUOI: {
     code: '293289',
     password: 'Vcc@2026',
@@ -27,7 +32,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'MANH', IUser> = {
   },
   MANH: {
     code: '467607',
-    password: 'Anhpd35cons@',
+    password: 'Hongbt8cons@',
     name: 'Lê Đức Mạnh'
   }
 };

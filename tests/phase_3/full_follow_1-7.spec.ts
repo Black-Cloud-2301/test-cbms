@@ -4,7 +4,7 @@ import {IUser, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
 const contractorName = CONTRACTOR_NAME_SEARCH;
-const totalImport = 3;
+const totalImport = 6;
 test('bid evaluation full', async ({page}) => {
   test.setTimeout(180000);
 
@@ -163,7 +163,7 @@ test('reevaluate', async ({page}) => {
   }
 
   // STEP 5
-  await loginWithRoleAndSearch(page, USERS.TUOI);
+  await loginWithRoleAndSearch(page, USERS.CAM_NHUNG);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -322,7 +322,7 @@ const saveStepFourth = async (page: Page, isNew: boolean = false) => {
 }
 
 const saveStepFifth = async (page: Page, isNew: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.TUOI, isNew);
+  await loginWithRoleAndSearch(page, USERS.CAM_NHUNG, isNew);
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
   const tableRow = mainDialog.locator('tbody tr');
   await checkCountBidder(page, 3);

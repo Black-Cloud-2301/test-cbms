@@ -43,3 +43,10 @@ export interface IDocumentByPid {
     updatedBy: number;
     updatedAt: string;
 }
+
+export interface IAppParam {
+  value: number;
+  label: string;
+  code: string;
+  parOrder: number;
+}

@@ -4,163 +4,308 @@ import {USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
 const contractorName = CONTRACTOR_NAME_SEARCH;
+test.describe('test document-by-pid ver 2', () => {
+  test.describe.configure({mode: 'serial'});
+  test.setTimeout(180000);
 
-test('save form 7', async ({page}) => {
-  await loginAndSearch(page);
+  test('save full', async ({page}) => {
 
-  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+    await loginAndSearch(page);
 
-  const currentRow = mainDialog.getByRole('cell', {name: 'Tờ trình phê duyệt KQLCNT'}).locator('..');
-  await currentRow.getByTitle('Cập nhật văn bản').click();
+    // save form 7
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
-  const subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt KQLCNT'});
+    let currentRow = mainDialog.getByRole('cell', {name: 'Tờ trình phê duyệt KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
 
-  let table = subDialog.locator('app-form-table').first();
-  let tableRow = table.locator('tbody tr');
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    await tableRow.nth(i).locator('input#validityNote').fill(i + 1 + ' kế toán đi tù');
-  }
+    let subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt KQLCNT'});
 
-  table = subDialog.locator('app-form-table').nth(1);
-  tableRow = table.locator('tbody tr');
-  for (let i = 0; i < countBidder; i++) {
-    await tableRow.nth(i).locator('input#experienceNote').fill(i + 1 + ' năm kinh nghiệm');
-  }
-
-  table = subDialog.locator('app-form-table').nth(2);
-  tableRow = table.locator('tbody tr');
-  for (let i = 0; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    await row.locator('span[role=combobox]#sample').click();
-    if (i === 0) {
-      await page.getByRole('option', {name: 'Không đáp ứng'}).click();
-      await row.locator('#technologyNote').fill('Hàng dễ vỡ khi vận chuyển');
-    } else {
-      await page.getByRole('option', {name: 'Đáp ứng', exact: true}).click();
-      await row.locator('#technologyNote').fill('Hàng to ' + (i + 1) + ' cm');
+    let table = subDialog.locator('app-form-table').first();
+    let tableRow = table.locator('tbody tr');
+    let countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      await tableRow.nth(i).locator('input#validityNote').fill(i + 1 + ' kế toán đi tù');
     }
-    await page.waitForTimeout(100);
-  }
 
-  table = subDialog.locator('app-form-table').nth(3);
-  tableRow = table.locator('tbody tr');
-  for (let i = 0; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    await row.locator('#errorCorrectionValue').pressSequentially(i + 1 + '00000');
-    await row.locator('#adjustmentDifferenceValue').pressSequentially(i + 5 + '0000');
-    await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
-  }
-  await saveForm(page, subDialog);
+    table = subDialog.locator('app-form-table').nth(1);
+    tableRow = table.locator('tbody tr');
+    for (let i = 0; i < countBidder; i++) {
+      await tableRow.nth(i).locator('input#experienceNote').fill(i + 1 + ' năm kinh nghiệm');
+    }
+
+    table = subDialog.locator('app-form-table').nth(2);
+    tableRow = table.locator('tbody tr');
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      await row.locator('span[role=combobox]#sample').click();
+      if (i === 0) {
+        await page.getByRole('option', {name: 'Không đáp ứng'}).click();
+        await row.locator('#technologyNote').fill('Hàng dễ vỡ khi vận chuyển');
+      } else {
+        await page.getByRole('option', {name: 'Đáp ứng', exact: true}).click();
+        await row.locator('#technologyNote').fill('Hàng to ' + (i + 1) + ' cm');
+      }
+      await page.waitForTimeout(100);
+    }
+
+    table = subDialog.locator('app-form-table').nth(3);
+    tableRow = table.locator('tbody tr');
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      await row.locator('#errorCorrectionValue').pressSequentially(i + 1 + '00000');
+      await row.locator('#adjustmentDifferenceValue').pressSequentially(i + 5 + '0000');
+      await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
+    }
+    await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await page.pause();
+    // save form 8
+
+    currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo thẩm định KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
+
+    subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo thẩm định KQLCNT'});
+
+    table = subDialog.locator('app-form-table').first();
+    tableRow = table.locator('tbody tr');
+    countBidder = await tableRow.count();
+
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (await row.locator('input#hsdtValidityDays').inputValue()) {
+        await row.locator('input#hsdtValidityDays').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#hsdtValidityDays').pressSequentially((i + 1).toString());
+      await page.waitForTimeout(100);
+      if (await row.locator('input#bidSecurityAmount').inputValue()) {
+        await row.locator('input#bidSecurityAmount').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#bidSecurityAmount').pressSequentially(i + 1 + '000000');
+      await page.waitForTimeout(100);
+      /*if (await row.locator('input#exchangeRate').inputValue()) {
+        await row.locator('input#exchangeRate').locator('..').locator('span.pi-times').click();
+      }*/
+      await row.locator('input#bidSecurityValidityDays').fill('Không biết là cái gì');
+    }
+
+    table = subDialog.locator('app-form-table').nth(1);
+    tableRow = table.locator('tbody tr');
+    countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (i === 0)
+        await row.locator('input#ratingSummaryNote').fill('Vứt');
+      else
+        await row.locator('input#ratingSummaryNote').fill(`Đã lót ${i + 1}00000 ngàn`);
+    }
+
+    await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await page.pause();
+    // save form 9
+
+    currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
+    subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KHLCNT'});
+
+    table = subDialog.locator('app-form-table').first();
+    tableRow = table.locator('tbody tr');
+    countBidder = await tableRow.count();
+
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (await row.locator('input#price').inputValue()) {
+        await row.locator('input#price').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#price').pressSequentially(i + 1 + '0000');
+      if (await row.locator('input#vat').inputValue()) {
+        await row.locator('input#vat').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#vat').pressSequentially(i + 5 + '');
+      await page.waitForTimeout(100);
+    }
+    await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await page.pause();
+    // save form 10
+
+    currentRow = mainDialog.getByRole('cell', {name: 'Thông báo KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
+    subDialog = page.getByRole('dialog', {name: 'Cập nhật thông báo KQLCNT'});
+
+    table = subDialog.locator('app-form-table').first();
+    tableRow = table.locator('tbody tr');
+    countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (await row.locator('input#ratingSummaryNote').inputValue()) {
+        await row.locator('input#ratingSummaryNote').locator('..').locator('span.pi-times').click();
+      }
+      await row.locator('input#ratingSummaryNote').fill('Nhà thầu thiếu tiền ' + (i + 1));
+    }
+
+    await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await page.pause();
+    // save form 10
+
+    await saveForm(page, mainDialog);
+  })
 })
 
-test('save form 8', async ({page}) => {
-  await loginAndSearch(page);
+  test('save form 7', async ({page}) => {
+    await loginAndSearch(page);
 
-  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
-  const currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo thẩm định KQLCNT'}).locator('..');
-  await currentRow.getByTitle('Cập nhật văn bản').click();
+    const currentRow = mainDialog.getByRole('cell', {name: 'Tờ trình phê duyệt KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
 
-  const subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo thẩm định KQLCNT'});
+    const subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt KQLCNT'});
 
-  let table = subDialog.locator('app-form-table').first();
-  let tableRow = table.locator('tbody tr');
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    if (await row.locator('input#hsdtValidityDays').inputValue()) {
-      await row.locator('input#hsdtValidityDays').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+    let table = subDialog.locator('app-form-table').first();
+    let tableRow = table.locator('tbody tr');
+    let countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      await tableRow.nth(i).locator('input#validityNote').fill(i + 1 + ' kế toán đi tù');
     }
-    await row.locator('input#hsdtValidityDays').pressSequentially((i + 1).toString());
-    await page.waitForTimeout(100);
-    if (await row.locator('input#bidSecurityAmount').inputValue()) {
-      await row.locator('input#bidSecurityAmount').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+
+    table = subDialog.locator('app-form-table').nth(1);
+    tableRow = table.locator('tbody tr');
+    for (let i = 0; i < countBidder; i++) {
+      await tableRow.nth(i).locator('input#experienceNote').fill(i + 1 + ' năm kinh nghiệm');
     }
-    await row.locator('input#bidSecurityAmount').pressSequentially(i + 1 + '000000');
-    await page.waitForTimeout(100);
-    /*if (await row.locator('input#exchangeRate').inputValue()) {
-      await row.locator('input#exchangeRate').locator('..').locator('span.pi-times').click();
-    }*/
-    await row.locator('input#bidSecurityValidityDays').fill('Không biết là cái gì');
-  }
 
-  table = subDialog.locator('app-form-table').nth(1);
-  tableRow = table.locator('tbody tr');
-  countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    if (i === 0)
-      await row.locator('input#ratingSummaryNote').fill('Vứt');
-    else
-      await row.locator('input#ratingSummaryNote').fill(`Đã lót ${i + 1}00000 ngàn`);
-  }
-
-  await saveForm(page, subDialog);
-})
-
-test('save form 9', async ({page}) => {
-  await loginAndSearch(page);
-
-  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
-  const currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
-  await currentRow.getByTitle('Cập nhật văn bản').click();
-  const subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KHLCNT'});
-
-  let table = subDialog.locator('app-form-table').first();
-  let tableRow = table.locator('tbody tr');
-  let countBidder = await tableRow.count();
-
-  for (let i = 0; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    if (await row.locator('input#price').inputValue()) {
-      await row.locator('input#price').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+    table = subDialog.locator('app-form-table').nth(2);
+    tableRow = table.locator('tbody tr');
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      await row.locator('span[role=combobox]#sample').click();
+      if (i === 0) {
+        await page.getByRole('option', {name: 'Không đáp ứng'}).click();
+        await row.locator('#technologyNote').fill('Hàng dễ vỡ khi vận chuyển');
+      } else {
+        await page.getByRole('option', {name: 'Đáp ứng', exact: true}).click();
+        await row.locator('#technologyNote').fill('Hàng to ' + (i + 1) + ' cm');
+      }
+      await page.waitForTimeout(100);
     }
-    await row.locator('input#price').pressSequentially(i + 1 + '0000');
-    if (await row.locator('input#vat').inputValue()) {
-      await row.locator('input#vat').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+
+    table = subDialog.locator('app-form-table').nth(3);
+    tableRow = table.locator('tbody tr');
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      await row.locator('#errorCorrectionValue').pressSequentially(i + 1 + '00000');
+      await row.locator('#adjustmentDifferenceValue').pressSequentially(i + 5 + '0000');
+      await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
     }
-    await row.locator('input#vat').pressSequentially(i + 5 + '');
-    await page.waitForTimeout(100);
-  }
 
-  await saveForm(page, subDialog);
-})
+    await saveForm(page, subDialog);
+    await page.pause();
+  })
 
-test('save form 10', async ({page}) => {
-  await loginAndSearch(page);
+  test('save form 8', async ({page}) => {
+    await loginAndSearch(page);
 
-  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
-  const currentRow = mainDialog.getByRole('cell', {name: 'Thông báo KQLCNT'}).locator('..');
-  await currentRow.getByTitle('Cập nhật văn bản').click();
-  const subDialog = page.getByRole('dialog', {name: 'Cập nhật thông báo KQLCNT'});
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
-  let table = subDialog.locator('app-form-table').first();
-  let tableRow = table.locator('tbody tr');
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    if (await row.locator('input#ratingSummaryNote').inputValue()) {
-      await row.locator('input#ratingSummaryNote').locator('..').locator('span.pi-times').click();
+    const currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo thẩm định KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
+
+    const subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo thẩm định KQLCNT'});
+
+    let table = subDialog.locator('app-form-table').first();
+    let tableRow = table.locator('tbody tr');
+    let countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (await row.locator('input#hsdtValidityDays').inputValue()) {
+        await row.locator('input#hsdtValidityDays').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#hsdtValidityDays').pressSequentially((i + 1).toString());
+      await page.waitForTimeout(100);
+      if (await row.locator('input#bidSecurityAmount').inputValue()) {
+        await row.locator('input#bidSecurityAmount').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#bidSecurityAmount').pressSequentially(i + 1 + '000000');
+      await page.waitForTimeout(100);
+      /*if (await row.locator('input#exchangeRate').inputValue()) {
+        await row.locator('input#exchangeRate').locator('..').locator('span.pi-times').click();
+      }*/
+      await row.locator('input#bidSecurityValidityDays').fill('Không biết là cái gì');
     }
-    await row.locator('input#ratingSummaryNote').fill('Nhà thầu thiếu tiền ' + (i + 1));
-  }
-  await saveForm(page, subDialog);
-})
+
+    table = subDialog.locator('app-form-table').nth(1);
+    tableRow = table.locator('tbody tr');
+    countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (i === 0)
+        await row.locator('input#ratingSummaryNote').fill('Vứt');
+      else
+        await row.locator('input#ratingSummaryNote').fill(`Đã lót ${i + 1}00000 ngàn`);
+    }
+
+    await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await saveForm(page, subDialog);
+  })
+
+  test('save form 9', async ({page}) => {
+    await loginAndSearch(page);
+
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+    const currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
+    const subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KHLCNT'});
+
+    let table = subDialog.locator('app-form-table').first();
+    let tableRow = table.locator('tbody tr');
+    let countBidder = await tableRow.count();
+
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (await row.locator('input#price').inputValue()) {
+        await row.locator('input#price').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#price').pressSequentially(i + 1 + '0000');
+      if (await row.locator('input#vat').inputValue()) {
+        await row.locator('input#vat').locator('..').locator('timesicon.p-inputnumber-clear-icon').click();
+      }
+      await row.locator('input#vat').pressSequentially(i + 5 + '');
+      await page.waitForTimeout(100);
+    }
+
+    await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await saveForm(page, subDialog);
+  })
+
+  test('save form 10', async ({page}) => {
+    await loginAndSearch(page);
+
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+    const currentRow = mainDialog.getByRole('cell', {name: 'Thông báo KQLCNT'}).locator('..');
+    await currentRow.getByTitle('Cập nhật văn bản').click();
+    const subDialog = page.getByRole('dialog', {name: 'Cập nhật thông báo KQLCNT'});
+
+    let table = subDialog.locator('app-form-table').first();
+    let tableRow = table.locator('tbody tr');
+    let countBidder = await tableRow.count();
+    for (let i = 0; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      if (await row.locator('input#ratingSummaryNote').inputValue()) {
+        await row.locator('input#ratingSummaryNote').locator('..').locator('span.pi-times').click();
+      }
+      await row.locator('input#ratingSummaryNote').fill('Nhà thầu thiếu tiền ' + (i + 1));
+    }
+    await page.pause();
+    await saveForm(page, subDialog);
+  })
+
 
 test('propose bid evaluation', async ({page}) => {
   await loginAndSearch(page);
 
-  await page.getByRole('button', {name: 'Đề xuất'}).click();
+  await page.locator('.p-checkbox-box').first().click();
 
-  let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/document-by-pid/propose/**`);
-  let resJson = await resPromise.json();
-
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đề xuất thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
+  await page.getByRole('button', {name: 'Trình thẩm định'}).click();
+  await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
+  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submit-to-appraiser`, 'Trình thẩm định thành công');
 })
 
 test('verify bid evaluation', async ({page}) => {
@@ -227,6 +372,7 @@ const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MOD
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
+  await page.pause();
 }
 
 const loginAndSearch = async (page: Page) => {
@@ -235,4 +381,13 @@ const loginAndSearch = async (page: Page) => {
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+}
+
+const checkSuccess = async (page: Page, url: string = `**${CBMS_MODULE}/document-by-pid/import`, successText: string = 'Import dữ liệu thành công') => {
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  let resPromise = await page.waitForResponse(url);
+  let resJson = await resPromise.json()
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
+  await alertSuccess.locator('.p-toast-icon-close').click();
 }

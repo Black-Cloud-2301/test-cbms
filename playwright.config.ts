@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import {URL} from './constants/common';
+import {URL_BASE} from './constants/common';
 
 /**
  * Read environment variables from file.
@@ -28,7 +28,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: URL,
+    baseURL: URL_BASE,
     headless: false,
     storageState: 'tests/state.json',
     // launchOptions: {
