@@ -24,8 +24,16 @@ export const screenshot = async (page: Page, module: string) => {
 const variablePath = path.resolve('constants', 'variable', 'index.meta.json');
 
 export const setGlobalVariable = (field: string, value: string) => {
-  fs.writeFileSync(variablePath, JSON.stringify({ [field]:value }), 'utf-8');
-}
+  let meta = {};
+  try {
+    meta = JSON.parse(fs.readFileSync(variablePath, 'utf-8'));
+  } catch (e) {
+    // File chưa tồn tại hoặc rỗng thì bỏ qua
+  }
+
+  meta[field] = value;
+  fs.writeFileSync(variablePath, JSON.stringify(meta, null, 2), 'utf-8'); // indent 2 để dễ đọc
+};
 
 export const getGlobalVariable = (field: string) => {
   const meta = JSON.parse(fs.readFileSync(variablePath, 'utf-8'));

@@ -180,7 +180,7 @@ test('verify', async ({page}) => {
 
 const saveForm = async (page: Page, dialog: Locator) => {
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
-
+  await page.pause();
   // await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
 }
 

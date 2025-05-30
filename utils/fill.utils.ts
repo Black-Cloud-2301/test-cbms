@@ -50,7 +50,7 @@ export const selectOption = async (page: Page, locator: Locator, id: string, val
   const currentInput = locator.locator(`div#${id}`);
   await currentInput.click();
   await page.waitForSelector('[role="listbox"]', {state: 'visible'});
-  await currentInput.getByRole('searchbox').fill(value);
+  await page.locator('.p-dropdown-panel').getByRole('searchbox').fill(value);
   const option = page.getByRole('option', {name: value, exact: true});
   await option.click();
   await page.waitForSelector('[role="listbox"]', {state: 'detached'});
@@ -60,7 +60,7 @@ export const selectDate = async (page: Page, locator: Locator, id: string, value
   const currentInput = locator.locator(`input[name="${id}"]`);
   const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
   const timesIcon = currentInput.locator('..').locator('timesicon.p-calendar-clear-icon')
-  if(await timesIcon.isVisible()) {
+  if (await timesIcon.isVisible()) {
     await timesIcon.click();
   }
   if (value) {
@@ -70,15 +70,23 @@ export const selectDate = async (page: Page, locator: Locator, id: string, value
   } else {
     await currentInput.click();
     await datePickerCalendar.locator('td.p-datepicker-today').first().click();
-    await page.getByRole('dialog', { name: 'Choose Date' }).waitFor({ state: 'detached' });
+    await page.getByRole('dialog', {name: 'Choose Date'}).waitFor({state: 'detached'});
   }
 }
 
-export const selectFile = async (locator: Locator, value: string, accept?:string) => {
-  if(accept) {
-    await locator.locator(`input[type="file"][accept*='${accept}']`).setInputFiles(value);
+export const selectFile = async ({
+                                   locator, value, accept, fileType
+                                 }: { locator: Locator; value: string; accept?: string; fileType?: string }) => {
+  if (accept) {
+    await locator.locator(`input[type="file"][accept*='${accept}']`).first().setInputFiles(value);
   } else
-  await locator.locator('input[type="file"]').setInputFiles(value);
+    await locator.locator('input[type="file"]').first().setInputFiles(value);
+
+  if (fileType) {
+    const fileName = value.split('/').pop();
+    await locator.getByRole('row').filter({hasText: fileName}).first().getByRole('cell').filter({hasText: /^$/}).first().click();
+    await locator.locator('select').selectOption(fileType);
+  }
 }
 
 export const selectAutocompleteMulti = async (
@@ -89,7 +97,7 @@ export const selectAutocompleteMulti = async (
   value: string,
   api: string) => {
   await locator.locator('auto-complete-multi').filter({hasText: title}).locator('span').nth(1).click();
-  const dialog = page.getByRole('dialog').filter({ hasText: dialogTitle });
+  const dialog = page.getByRole('dialog').filter({hasText: dialogTitle});
   await dialog.locator(`input[name=keySearch]`).fill(value);
   await dialog.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}${api}`) && response.status() === 200);

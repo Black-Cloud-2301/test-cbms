@@ -5,6 +5,7 @@ import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
 const contractorName = CONTRACTOR_NAME_SEARCH;
 const totalImport = 6;
+
 test('bid evaluation full', async ({page}) => {
   test.setTimeout(180000);
 

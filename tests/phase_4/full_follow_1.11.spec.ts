@@ -177,7 +177,6 @@ test.describe('test document-by-pid ver .11', () => {
     await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
 
     await page.locator('.p-checkbox-box').first().click();
-
     await page.getByRole('button', {name: 'Trình thẩm định'}).click();
     await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
     await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submit-to-appraiser`, 'Trình thẩm định thành công');
@@ -231,7 +230,7 @@ const saveForm = async (page: Page, dialog: Locator, url: string = '**/document-
 }
 
 const loginAndSearch = async (page: Page) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID');
+  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.MANH);
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);

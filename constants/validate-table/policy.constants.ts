@@ -10,6 +10,10 @@ export const validatePolicyTable: IValidateTableColumn[] = [
     align: 'center'
   },
   {
+    title: 'Thao tác',
+    type: 'action',
+  },
+  {
     title: 'Mã chủ trương',
     type: 'link',
   },
@@ -53,10 +57,6 @@ export const validatePolicyTable: IValidateTableColumn[] = [
     title: 'Đơn vị tạo',
     type: 'text',
   },
-  {
-    title: 'Thao tác',
-    type: 'action',
-  },
 ]
 
 export const validateProjectTable: IValidateTableColumn[] = [
@@ -67,6 +67,10 @@ export const validateProjectTable: IValidateTableColumn[] = [
     title: 'STT',
     type: 'number',
     align: 'center'
+  },
+  {
+    title: 'Thao tác',
+    type: 'action',
   },
   {
     title: 'Mã dự án',
@@ -112,10 +116,6 @@ export const validateProjectTable: IValidateTableColumn[] = [
     title: 'Đơn vị tạo',
     type: 'text',
   },
-  {
-    title: 'Thao tác',
-    type: 'action',
-  },
 ]
 
 export const validatePurchaseTable: IValidateTableColumn[] = [
@@ -126,6 +126,10 @@ export const validatePurchaseTable: IValidateTableColumn[] = [
     title: 'STT',
     type: 'number',
     align: 'center'
+  },
+  {
+    title: 'Thao tác',
+    type: 'action',
   },
   {
     title: 'Mã đề xuất mua sắm',
@@ -157,10 +161,6 @@ export const validatePurchaseTable: IValidateTableColumn[] = [
     title: 'Đơn vị tạo',
     type: 'text',
   },
-  {
-    title: 'Thao tác',
-    type: 'action',
-  },
 ]
 
 export const validateSelectPlanTable: IValidateTableColumn[] = [
@@ -171,6 +171,10 @@ export const validateSelectPlanTable: IValidateTableColumn[] = [
     title: 'STT',
     type: 'number',
     align: 'center'
+  },
+  {
+    title: 'Thao tác',
+    type: 'action',
   },
   {
     title: 'Mã KHLCNT',
@@ -213,9 +217,5 @@ export const validateSelectPlanTable: IValidateTableColumn[] = [
   {
     title: 'Đơn vị tạo',
     type: 'text',
-  },
-  {
-    title: 'Thao tác',
-    type: 'action',
   },
 ]

@@ -5,7 +5,7 @@ import {URL_BASE} from '../../constants/common';
 
 const authFile = path.join(__dirname, '..', 'state.json');
 
-export const login = async (page: Page, url?: string, user: IUser = USERS.NHUNG) => {
+export const login = async (page: Page, url?: string, user: IUser = USERS.MANH) => {
   await page.goto('');
   if (page.url().startsWith('chrome-error://chromewebdata/')) {
     await page.getByRole('button', {name: 'Advanced'}).click();

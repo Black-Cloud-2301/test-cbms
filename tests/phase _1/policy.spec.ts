@@ -8,13 +8,12 @@ import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {validatePolicyTable} from '../../constants/validate-table/policy.constants';
 import {IAppParam} from '../../constants/interface';
-
-const POLICY_NAME = `TA autotest chủ trương`;
+import {getGlobalVariable, setGlobalVariable} from '../../utils';
 
 test.describe('test policy', () => {
   test('create policy full flow', async ({page}) => {
     test.setTimeout(180000);
-    await login(page, '/BIDDING_POLICY', USERS.NHUNG);
+    await login(page, '/BIDDING_POLICY');
     await search(page);
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới chủ trương'});
@@ -23,11 +22,11 @@ test.describe('test policy', () => {
     let count = 1;
     if (rowCount > 0) {
       const row = tableRow.first();
-      const oldName = await row.locator('td').nth(3).innerText();
+      const oldName = await row.locator('td').nth(4).innerText();
       const match = oldName.match(/chủ trương (\d+)/i);
       count = match ? parseInt(match[1]) + 1 : 1;
     }
-    const nameSearch = POLICY_NAME + ` ${count}`
+    const nameSearch = getGlobalVariable('policyName') + ` ${count}`
     await createPolicy(page, mainDialog, nameSearch);
     await submitToAppraisal(page, nameSearch);
     await appraisal(page, nameSearch);
@@ -58,7 +57,7 @@ test.describe('test policy', () => {
       url: URL_BE_BASE + '/policy/doSearch',
       searchObject: {totalInvestmentFrom: searchValue},
       type: 'CURRENCY',
-      validateInput: {locator, searchValue, maxLength: 13},
+      validateInput: {locator, searchValue, maxLength: 16},
       conditions: [{fields: ['totalInvestment'], value: searchValue, match: 'MORE_THAN_EQUAL'}]
     });
     await locator.clear();
@@ -71,7 +70,7 @@ test.describe('test policy', () => {
       url: URL_BE_BASE + '/policy/doSearch',
       searchObject: {totalInvestmentTo: searchValue},
       type: 'CURRENCY',
-      validateInput: {locator, searchValue, maxLength: 13},
+      validateInput: {locator, searchValue, maxLength: 16},
       conditions: [{fields: ['totalInvestment'], value: searchValue, match: 'LESS_THAN_EQUAL'}]
     });
     await locator.clear();
@@ -180,7 +179,6 @@ test.describe('test policy', () => {
     });
   })
 
-
   test('table pageable - ID từ response không trùng', async ({page}) => {
     await login(page, '/BIDDING_POLICY');
 
@@ -217,10 +215,12 @@ test.describe('test policy', () => {
     }
 
     await page.getByRole('combobox', {name: 'Rows per page'}).click();
-    await page.getByRole('option', {name: '100'}).click();
-    const res = await page.waitForResponse(res =>
-      res.url().includes('/policy/doSearch') && res.status() === 200
-    )
+    const [res] = await Promise.all([
+      page.waitForResponse(res =>
+        res.url().includes('/policy/doSearch') && res.status() === 200
+      ),
+      await page.getByRole('option', {name: '100'}).click()
+    ]);
     const responseData = await res.json();
     expect(responseData.type).toEqual('SUCCESS');
     const totalElements = await responseData.data?.totalElements;
@@ -260,7 +260,7 @@ test('create policy', async ({page}) => {
       const match = oldName.match(/chủ trương (\d+)/i);
       count = match ? parseInt(match[1]) + 1 : 1;
     }
-    const nameSearch = POLICY_NAME + ` ${count}`
+    const nameSearch = getGlobalVariable('policyName') + ` ${count}`
     await createPolicy(page, mainDialog, nameSearch)
   }
 );
@@ -311,7 +311,7 @@ interface SaveFormOptions {
 }
 
 const search = async (page: Page, name?: string) => {
-  await page.locator(`input[name="keySearch"]`).fill(name ? name : POLICY_NAME);
+  await page.locator(`input[name="keySearch"]`).fill(name ? name : getGlobalVariable('policyName'));
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/policy/doSearch') && response.status() === 200);
 }
@@ -374,7 +374,8 @@ const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: string)
   await fillText(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'policyDate');
   await selectOption(page, mainDialog, 'approvedBy', '1. HĐQT');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
+  await selectFile({locator:mainDialog, value:'assets/files/sample.pdf', fileType:'02'});
+  await selectFile({locator:mainDialog, value:'assets/files/sample-1.pdf',fileType: '01'});
   await saveForm({page, dialog: mainDialog});
 }
 
@@ -408,7 +409,8 @@ const appraisal = async (page: Page, nameSearch?: string) => {
 
   if (rowCount > 0) {
     const row = tableRow.first();
-    await row.getByTitle('Thẩm định chủ trương', {exact: true}).click();
+    await row.getByTitle('Xem chi tiết', {exact: true}).click();
+    await page.getByRole('button', {name: 'Thẩm định'}).click();
     const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận thẩm định chủ trương'});
     await saveForm({
       page,
@@ -417,7 +419,9 @@ const appraisal = async (page: Page, nameSearch?: string) => {
       url: '**/policy/appraisal',
       successText: 'Thành công'
     })
-
+    if (nameSearch) {
+      setGlobalVariable('lastPolicyName', nameSearch);
+    }
     // await checkAdjustment(page, tableRow);
   } else {
     console.log('Không tìm thấy bản ghi');
@@ -444,7 +448,6 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   await fillText(mainDialog, 'decisionNumber', `QD_TA_AUTOTEST_${rowCount + 1}_DC`);
   await selectDate(page, mainDialog, 'policyDate');
   await selectOption(page, mainDialog, 'approvedBy', '1. HĐQT');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
   await saveForm({page, dialog: mainDialog, successText: 'Điều chỉnh chủ trương thành công'})
   rowCount = await tableRow.count();
   expect(rowCount > 1);
@@ -452,7 +455,7 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   let countStatusNew = 0;
   for (let i = 0; i < rowCount; i++) {
     const row = tableRow.nth(i);
-    const statusText = await row.locator('td').nth(4).innerText(); // cột "Trạng thái"
+    const statusText = await row.locator('td').nth(5).innerText(); // cột "Trạng thái"
     if (statusText.includes('1. Mới tạo')) {
       countStatusNew++;
 

@@ -57,7 +57,6 @@ test.describe('test document-by-pid ver 2', () => {
       await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
     }
     await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-    await page.pause();
     // save form 8
 
     currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo thẩm định KQLCNT'}).locator('..');
@@ -99,7 +98,6 @@ test.describe('test document-by-pid ver 2', () => {
     }
 
     await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-    await page.pause();
     // save form 9
 
     currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
@@ -123,7 +121,6 @@ test.describe('test document-by-pid ver 2', () => {
       await page.waitForTimeout(100);
     }
     await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-    await page.pause();
     // save form 10
 
     currentRow = mainDialog.getByRole('cell', {name: 'Thông báo KQLCNT'}).locator('..');
@@ -142,10 +139,80 @@ test.describe('test document-by-pid ver 2', () => {
     }
 
     await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-    await page.pause();
     // save form 10
 
     await saveForm(page, mainDialog);
+  })
+
+  test('propose bid evaluation', async ({page}) => {
+    await login(page, '/CBMS_DOCUMENT_BY_PID');
+    await page.locator(`input[name="keySearch"]`).fill(contractorName);
+    await page.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
+
+    let tableRow = page.locator('tbody tr');
+    let rowCount = await tableRow.count();
+    expect(rowCount > 0);
+    const row = tableRow.first();
+    await row.locator('p-checkbox').click();
+    await page.getByRole('button', {name: 'Trình thẩm định'}).click();
+    await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
+    await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submit-to-appraiser`, 'Trình thẩm định thành công');
+  })
+
+  test('verify bid evaluation', async ({page}) => {
+    await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
+    await page.locator(`input[name="keySearch"]`).fill(contractorName);
+    await page.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
+    await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+    await page.pause();
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+
+    /*let tableRow = mainDialog.locator('tbody tr');
+    console.log(await tableRow.evaluate(r=>r.outerHTML))
+    let countBidder = await tableRow.count();
+    console.log('countBidder',countBidder)
+    for (let i = 1; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      console.log(await row.evaluate(r=>r.outerHTML))
+      await row.getByRole('combobox', {name: '--Chọn--'}).click();
+      if(i===1) {
+        await page.getByRole('option', {name: 'Hủy', exact: true}).click();
+      } else {
+        await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
+      }
+      await page.waitForTimeout(100);
+    }*/
+
+    let tableRow = mainDialog.locator('tbody tr');
+    let countBidder = await tableRow.count();
+    while (countBidder <= 1) {
+      countBidder = await tableRow.count();
+      await page.waitForTimeout(100);
+    }
+    for (let i = 1; i < countBidder; i++) {
+      const row = tableRow.nth(i);
+      await row.getByRole('combobox', {name: '--Chọn--'}).click();
+      // if(i===1) {
+      //   await page.getByRole('option', {name: 'Hủy', exact: true}).click();
+      // } else {
+      await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
+      // }
+      await page.waitForTimeout(100);
+      await row.locator('input#note').fill('Chú thích ' + (i + 1))
+    }
+
+    await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
+
+    let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/document-by-pid/confirm`);
+    let resJson = await resPromise.json();
+
+    const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+
+    expect(resJson.type).toEqual('SUCCESS');
+    await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
+    await alertSuccess.locator('.p-toast-icon-close').click();
   })
 })
 
@@ -197,7 +264,6 @@ test.describe('test document-by-pid ver 2', () => {
     }
 
     await saveForm(page, subDialog);
-    await page.pause();
   })
 
   test('save form 8', async ({page}) => {
@@ -293,77 +359,10 @@ test.describe('test document-by-pid ver 2', () => {
       }
       await row.locator('input#ratingSummaryNote').fill('Nhà thầu thiếu tiền ' + (i + 1));
     }
-    await page.pause();
     await saveForm(page, subDialog);
   })
 
-
-test('propose bid evaluation', async ({page}) => {
-  await loginAndSearch(page);
-
-  await page.locator('.p-checkbox-box').first().click();
-
-  await page.getByRole('button', {name: 'Trình thẩm định'}).click();
-  await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
-  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submit-to-appraiser`, 'Trình thẩm định thành công');
-})
-
-test('verify bid evaluation', async ({page}) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
-
-  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
-
-  /*let tableRow = mainDialog.locator('tbody tr');
-  console.log(await tableRow.evaluate(r=>r.outerHTML))
-  let countBidder = await tableRow.count();
-  console.log('countBidder',countBidder)
-  for (let i = 1; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    console.log(await row.evaluate(r=>r.outerHTML))
-    await row.getByRole('combobox', {name: '--Chọn--'}).click();
-    if(i===1) {
-      await page.getByRole('option', {name: 'Hủy', exact: true}).click();
-    } else {
-      await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
-    }
-    await page.waitForTimeout(100);
-  }*/
-
-  let tableRow = mainDialog.locator('tbody tr');
-  let countBidder = await tableRow.count();
-  while (countBidder <= 1) {
-    countBidder = await tableRow.count();
-    await page.waitForTimeout(100);
-  }
-  for (let i = 1; i < countBidder; i++) {
-    const row = tableRow.nth(i);
-    await row.getByRole('combobox', {name: '--Chọn--'}).click();
-    // if(i===1) {
-    //   await page.getByRole('option', {name: 'Hủy', exact: true}).click();
-    // } else {
-    await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
-    // }
-    await page.waitForTimeout(100);
-    await row.locator('input#note').fill('Chú thích ' + (i + 1))
-  }
-
-  await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
-
-  let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/document-by-pid/confirm`);
-  let resJson = await resPromise.json();
-
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-})
-
-const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/bid-evaluation/saveEvaluateHsdt`, successText: string = 'Cập nhật dữ liệu thành công') => {
+const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/document-by-pid/save`, successText: string = 'Cập nhật dữ liệu thành công') => {
   await dialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
@@ -372,7 +371,6 @@ const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MOD
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
-  await page.pause();
 }
 
 const loginAndSearch = async (page: Page) => {

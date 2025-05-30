@@ -16,20 +16,18 @@ import {
   validateInputNumber,
   validateInputText
 } from '../../utils/validate.utils';
-import {screenshot} from '../../utils';
+import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {IAppParam} from '../../constants/interface';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {validateSelectPlanTable} from '../../constants/validate-table/policy.constants';
 
 const SELECTION_PLAN_NAME = `TA autotest kế hoạch lựa chọn nhà thầu`;
-const POLICY_NAME = `TA autotest chủ trương 1 DC 1`;
-const PURCHASE_NAME = `TA autotest đề xuất mua sắm 6`;
 
 test.describe('test selection plan', () => {
   test.describe.configure({mode: 'serial'});
   test.setTimeout(180000);
-  
+
   test('create selection_plan/ new package/ shopping full', async ({page}) => {
     test.setTimeout(180000)
     await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN');
@@ -41,7 +39,7 @@ test.describe('test selection plan', () => {
     let count = 1;
     if (rowCount > 0) {
       const row = tableRow.first();
-      const oldName = await row.locator('td').nth(3).innerText();
+      const oldName = await row.locator('td').nth(4).innerText();
       const match = oldName.match(new RegExp(`Mua sắm ${SELECTION_PLAN_NAME} (\\d+)`, 'i'));
       count = match ? parseInt(match[1]) + 1 : 1;
     }
@@ -51,14 +49,14 @@ test.describe('test selection plan', () => {
     await submitToAppraiser(page, nameSearch);
     await appraisal(page, nameSearch);
   });
-  
+
   test('selection_plan submit to appraiser', async ({page}) => {
     await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN', USERS.NHUNG);
     await search(page);
 
     await submitToAppraiser(page);
   })
-  
+
   test('selection_plan appraiser', async ({page}) => {
     await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN', USERS.PC);
     await search(page);
@@ -271,7 +269,7 @@ test.describe('test selection plan', () => {
     await validateInputText({locator});
     await dialog.locator('input[formcontrolname="purchaseRequestCode"]').click({force: true});
     const selectPurchaseDialog = page.getByRole('dialog', {name: 'Chọn đề xuất mua sắm'});
-    await selectAutocompleteMulti(page, selectPurchaseDialog, 'Chọn đề xuất mua sắm', 'Tìm kiếm mã đề xuất mua sắm', PURCHASE_NAME, 'purchase/search-purchase');
+    await selectAutocompleteMulti(page, selectPurchaseDialog, 'Chọn đề xuất mua sắm', 'Tìm kiếm mã đề xuất mua sắm', getGlobalVariable('purchaseName'), 'purchase/search-purchase');
     let tableRow = selectPurchaseDialog.locator('tbody tr');
     let rowCount = await tableRow.count();
     for (let i = 0; i < rowCount; i++) {
@@ -295,74 +293,86 @@ test.describe('test selection plan', () => {
 test('create selection_plan/ new package/ investment project', async ({page}) => {
   const totalValue = 10000000;
   const packageCount = 3;
-  const unit = 1_000_000;
-
-  const baseValue = Math.floor(totalValue / packageCount / unit) * unit;
-  let usedValue = 0;
 
   await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN', USERS.NHUNG);
-  await page.getByRole('button', {name: 'Thêm mới'}).click();
-  const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
-  await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
-  await selectOption(page, mainDialog, 'inputSource', '1. Dự án đầu tư');
-  await fillText(mainDialog, 'contractorSelectionPlanName', SELECTION_PLAN_NAME);
-  await selectAutocompleteMulti(page, mainDialog, 'Mã chủ trương', 'Tìm kiếm chủ trương', POLICY_NAME, 'policy/doSearchLastVersion');
-  await fillNumber(mainDialog, 'totalValue', '' + totalValue);
-  await fillNumber(mainDialog, 'packageCount', '' + packageCount);
-  await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST`);
-  await selectDate(page, mainDialog, 'decisionApprovalDate');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
+  await search(page);
 
-  await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  let tableRow = mainDialog.locator('tbody tr');
-  let rowCount = await tableRow.count();
-  const packageDialog = page.getByRole('dialog', {name: 'Thêm mới gói thầu'});
-  expect(rowCount > 2);
-  for (let i = 0; i < rowCount; i++) {
-    let value = baseValue;
-    const row = tableRow.nth(i);
-    await row.getByTitle('Thêm', {exact: true}).click();
-    await selectFile(packageDialog, 'assets/files/bieu_mau_tao_goi_thau.xlsx', '.xls, .xlsx')
-    await packageDialog.getByRole('button', {name: 'Tải lên'}).click();
-    const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-    await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import thành công');
-    await alertSuccess.locator('.p-toast-icon-close').click();
-    await fillText(mainDialog, 'contractorName', ` gói thầu ${i + 1}`);
-    await fillNumber(mainDialog, 'projectApprovalValue', '2000000');
-    await fillText(mainDialog, 'decisionNumber', `SO_QD_PD_DT_GT_${i + 1}`);
-    await selectDate(page, mainDialog, 'decisionApprovalDate');
-    await selectFile(mainDialog, 'assets/files/sample.pdf', '.pdf,.doc,.docx');
-    if (i === packageCount - 1) {
-      value = totalValue - usedValue;
-      await fillNumber(mainDialog, 'contractorPrice', value.toString());
-    }
-    usedValue += value;
-    await page.waitForTimeout(500);
-    await packageDialog.getByRole('button', {name: 'Ghi lại'}).click();
-  }
-
-  await saveForm({page, dialog: mainDialog});
-});
-
-test('create selection_plan/ new package/ shopping', async ({page}) => {
-  await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN', USERS.NHUNG);
-  await page.getByRole('button', {name: 'Thêm mới'}).click();
-  const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
   let count = 1;
   if (rowCount > 0) {
     const row = tableRow.first();
-    const oldName = await row.locator('td').nth(3).innerText();
-    const match = oldName.match(new RegExp(`Mua sắm ${SELECTION_PLAN_NAME} (\\d+)`, 'i'));
+    const oldName = await row.locator('td').nth(4).innerText();
+    const match = oldName.match(new RegExp(`${SELECTION_PLAN_NAME} (\\d+)`, 'i'));
     count = match ? parseInt(match[1]) + 1 : 1;
   }
-  const nameSearch = PURCHASE_NAME + ` ${count}`;
+  const nameSearch = SELECTION_PLAN_NAME + ` ${count}`;
 
-  await createSelectionPlanNewPackageShopping(page, mainDialog, nameSearch);
+  await page.getByRole('button', {name: 'Thêm mới'}).click();
+  const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
+  await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
+  await selectOption(page, mainDialog, 'inputSource', '1. Dự án đầu tư');
+  await fillText(mainDialog, 'contractorSelectionPlanName', nameSearch);
+  await selectAutocompleteMulti(page, mainDialog, 'Mã chủ trương', 'Tìm kiếm chủ trương', getGlobalVariable('lastPolicyName'), 'policy/doSearchLastVersion');
+  await fillNumber(mainDialog, 'totalValue', '' + totalValue);
+  await fillNumber(mainDialog, 'packageCount', '' + packageCount);
+  await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST`);
+  await selectDate(page, mainDialog, 'decisionApprovalDate');
+  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '01'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-1.pdf', fileType: '02'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-2.pdf', fileType: '03'});
+
+  await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
+  await createContractor(page, mainDialog, totalValue, packageCount);
+  await saveForm({page, dialog: mainDialog});
+
   await submitToAppraiser(page, nameSearch);
+  await appraisal(page, nameSearch);
 });
 
+
+test('create selection_plan/ adjust/ investment project', async ({page}) => {
+  test.setTimeout(180000);
+  const totalValue = 10000000;
+  const packageCount = 3;
+
+  await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN');
+  await page.getByRole('button', {name: 'Thêm mới'}).click();
+  const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
+  await selectOption(page, mainDialog, 'purpose', '1. Điều chỉnh gói thầu');
+  await selectOption(page, mainDialog, 'inputSource', '1. Dự án đầu tư');
+  let tableRow = page.locator('tbody tr');
+  let rowCount = await tableRow.count();
+  let count = 1;
+  if (rowCount > 0) {
+    const row = tableRow.first();
+    const oldName = await row.locator('td').nth(4).innerText();
+    const match = oldName.match(new RegExp(`${SELECTION_PLAN_NAME} (\\d+)`, 'i'));
+    count = match ? parseInt(match[1]) + 1 : 1;
+  }
+  const nameSearch = SELECTION_PLAN_NAME + ` ${count}`;
+  await fillText(mainDialog, 'contractorSelectionPlanName', nameSearch);
+  await selectAutocompleteMulti(page, mainDialog, 'Mã chủ trương', 'Tìm kiếm chủ trương', getGlobalVariable('lastPolicyName'), 'policy/doSearchLastVersion');
+  await fillNumber(mainDialog, 'totalValue', '' + totalValue);
+  await fillNumber(mainDialog, 'packageCount', '' + packageCount);
+  await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST`);
+  await selectDate(page, mainDialog, 'decisionApprovalDate');
+  await mainDialog.locator('input-v2').filter({hasText: 'Gói sửa đổi *'}).locator('p-checkbox div').nth(2).click();
+  await selectAutocompleteMulti(page, mainDialog, 'Gói thầu sửa đổi', 'Tìm kiếm gói thầu sửa đổi', 'TA autotest 11', '/contractor/doSearch');
+  await mainDialog.locator('input-v2').filter({hasText: 'Gói thầu hủy *'}).locator('p-checkbox div').nth(2).click();
+  await selectAutocompleteMulti(page, mainDialog, 'Gói thầu hủy', 'Tìm kiếm gói thầu hủy', 'TA autotest 12', '/contractor/doSearch');
+  await fillText(mainDialog, 'decisionNumberModify', `SO_QD_BH_SD_KHLCNT_TA_AUTOTEST`);
+  await selectDate(page, mainDialog, 'decisionApprovalDateModify');
+  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '01'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-1.pdf', fileType: '02'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-2.pdf', fileType: '03'});
+  await page.pause();
+  await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
+
+  await createContractor(page, mainDialog, totalValue, packageCount);
+
+  await saveForm({page, dialog: mainDialog});
+});
 
 const saveForm = async ({
                           page,
@@ -377,9 +387,8 @@ const saveForm = async ({
     page.waitForResponse(res =>
       res.url().includes(url) && res.status() === 200
     ),
-    dialog.getByRole('button', { name: buttonName }).click()
+    dialog.getByRole('button', {name: buttonName}).click()
   ]);
-
   const resJson = await res.json();
   expect(resJson.type).toEqual('SUCCESS');
 
@@ -414,10 +423,6 @@ const search = async (page: Page, name?: string) => {
 const createSelectionPlanNewPackageShopping = async (page, mainDialog: Locator, nameSearch?: string) => {
   const totalValue = 1000000;
   const packageCount = 3;
-  const unit = 100_000;
-
-  const baseValue = Math.floor(totalValue / packageCount / unit) * unit;
-  let usedValue = 0;
 
   await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
   await selectOption(page, mainDialog, 'inputSource', '2. Mua sắm thường xuyên');
@@ -425,7 +430,7 @@ const createSelectionPlanNewPackageShopping = async (page, mainDialog: Locator, 
 
   await mainDialog.locator('input[formcontrolname="purchaseRequestCode"]').click({force: true});
   const selectPurchaseDialog = page.getByRole('dialog', {name: 'Chọn đề xuất mua sắm'});
-  await selectAutocompleteMulti(page, selectPurchaseDialog, 'Chọn đề xuất mua sắm', 'Tìm kiếm mã đề xuất mua sắm', PURCHASE_NAME, 'purchase/search-purchase');
+  await selectAutocompleteMulti(page, selectPurchaseDialog, 'Chọn đề xuất mua sắm', 'Tìm kiếm mã đề xuất mua sắm', getGlobalVariable('lastPurchaseName'), 'purchase/search-purchase');
   let tableRow = selectPurchaseDialog.locator('tbody tr');
   let rowCount = await tableRow.count();
   for (let i = 0; i < rowCount; i++) {
@@ -437,39 +442,13 @@ const createSelectionPlanNewPackageShopping = async (page, mainDialog: Locator, 
   await fillNumber(mainDialog, 'packageCount', '' + packageCount);
   await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST_MUA_SAM`);
   await selectDate(page, mainDialog, 'decisionApprovalDate');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
+  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '01'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-1.pdf', fileType: '02'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-2.pdf', fileType: '03'});
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  tableRow = mainDialog.locator('tbody tr');
-  rowCount = await tableRow.count();
-  const packageDialog = page.getByRole('dialog', {name: 'Thêm mới gói thầu'});
-  expect(rowCount > 2);
-  for (let i = 0; i < rowCount; i++) {
-    let value = baseValue;
-    const row = tableRow.nth(i);
-    await row.getByTitle('Chỉnh sửa', {exact: true}).click();
-    await selectFile(packageDialog, 'assets/files/bieu_mau_tao_goi_thau.xlsx', '.xls, .xlsx')
-    await packageDialog.getByRole('button', {name: 'Tải lên'}).click();
-    const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-    await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import thành công');
-    await alertSuccess.locator('.p-toast-icon-close').click();
-    await fillText(mainDialog, 'contractorName', `TA autotest ${i + 8}`);
-    await fillText(mainDialog, 'capitalDetails', `Nguồn vốn trên trời rơi xuống`);
-    // await fillText(mainDialog, 'decisionNumber', `SO_QD_PD_DT_GT_${i + 1}`);
-    // await selectDate(page, mainDialog, 'decisionApprovalDate');
-    // await selectFile(mainDialog, 'assets/files/sample.pdf', '.pdf,.doc,.docx');
-    if (i === packageCount - 1) {
-      value = totalValue - usedValue;
-      await fillNumber(mainDialog, 'contractorPrice', value.toString());
-      // await fillNumber(mainDialog, 'projectApprovalValue', value.toString());
-    } else {
-      await fillNumber(mainDialog, 'contractorPrice', baseValue.toString());
-      // await fillNumber(mainDialog, 'projectApprovalValue', value.toString());
-    }
-    usedValue += value;
-    await page.waitForTimeout(500);
-    await packageDialog.getByRole('button', {name: 'Ghi lại'}).click();
-  }
-  // await page.pause();
+  await page.pause();
+  await createContractor(page, mainDialog, totalValue, packageCount);
+  await page.pause();
   await saveForm({page, dialog: mainDialog});
 }
 
@@ -503,7 +482,8 @@ const appraisal = async (page: Page, nameSearch?: string) => {
   let rowCount = await tableRow.count();
   if (rowCount > 0) {
     const row = tableRow.first();
-    await row.getByTitle('Thẩm định KHLCNT', {exact: true}).click();
+    await row.getByTitle('Xem chi tiết', {exact: true}).click();
+    await page.getByRole('button', {name: 'Thẩm định'}).click();
     const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận thẩm định KHLCNT'});
     await page.pause();
     await saveForm({
@@ -513,5 +493,47 @@ const appraisal = async (page: Page, nameSearch?: string) => {
       url: '/contractor-selection-plan/appraisal',
       successText: 'Thẩm định thành công'
     })
+    setGlobalVariable('lastSelectionPlanName', nameSearch);
+  }
+}
+
+const createContractor = async (page: Page, mainDialog: Locator, totalValue: number, packageCount: number) => {
+  const unit = 1000_000;
+  const baseValue = Math.floor(totalValue / packageCount / unit) * unit;
+  let usedValue = 0;
+
+  let tableRow = mainDialog.locator('tbody tr');
+  let rowCount = await tableRow.count();
+  const packageDialog = page.getByRole('dialog', {name: 'Thêm mới gói thầu'});
+  expect(rowCount > 2);
+  for (let i = 0; i < rowCount; i++) {
+    let value = baseValue;
+    const row = tableRow.nth(i);
+    await row.getByTitle('Chỉnh sửa', {exact: true}).click();
+    await selectFile({locator: packageDialog, value: 'assets/files/bieu_mau_tao_goi_thau.xlsx', accept: '.xls, .xlsx'})
+    await packageDialog.getByRole('button', {name: 'Tải lên'}).click();
+    const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+    await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import thành công');
+    await alertSuccess.locator('.p-toast-icon-close').click();
+    const match = getGlobalVariable('lastContractorName').match(new RegExp(`TA autotest (\\d+)`, 'i'));
+    const count = match ? parseInt(match[1]) + 1 : 1;
+    const contractorName = `TA autotest ${count}`;
+    await fillText(mainDialog, 'contractorName', contractorName);
+    // await fillText(mainDialog, 'capitalDetails', `Nguồn vốn trên trời rơi xuống`);
+    // await fillText(mainDialog, 'decisionNumber', `SO_QD_PD_DT_GT_${i + 1}`);
+    // await selectDate(page, mainDialog, 'decisionApprovalDate');
+    // await selectFile(mainDialog, 'assets/files/sample.pdf', '.pdf,.doc,.docx');
+    if (i === packageCount - 1) {
+      value = totalValue - usedValue;
+      await fillNumber(mainDialog, 'contractorPrice', value.toString());
+      // await fillNumber(mainDialog, 'projectApprovalValue', value.toString());
+    } else {
+      await fillNumber(mainDialog, 'contractorPrice', baseValue.toString());
+      // await fillNumber(mainDialog, 'projectApprovalValue', value.toString());
+    }
+    usedValue += value;
+    await page.waitForTimeout(500);
+    await packageDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    setGlobalVariable('lastContractorName', contractorName);
   }
 }

@@ -31,12 +31,12 @@ test.describe('test purchase', () => {
     let count = 1;
     if (rowCount > 0) {
       const row = tableRow.first();
-      const oldName = await row.locator('td').nth(3).innerText();
+      const oldName = await row.locator('td').nth(4).innerText();
       const match = oldName.match(/đề xuất mua sắm (\d+)/i);
       count = match ? parseInt(match[1]) + 1 : 1;
     }
     let nameSearch = PURCHASE_NAME + ` ${count}`;
-    setGlobalVariable('currentPurchaseName', nameSearch);
+    setGlobalVariable('lastPurchaseName', nameSearch);
     await createPurchase(page, mainDialog, nameSearch);
   });
 
@@ -276,7 +276,7 @@ const search = async (page: Page, name?: string) => {
 const createPurchase = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
   await fillText(mainDialog, 'purchaseRequestName', nameSearch);
   await fillText(mainDialog, 'procurementProposalContent', 'Mua cả thế giới');
-  await fillNumber(mainDialog, 'propositionPurchasePrice', '1000000');
+  await fillNumber(mainDialog, 'propositionPurchasePrice', '100000000');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'procurementProposalDocumentNumber', `SO_VB_DXMS_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'decisionDay');

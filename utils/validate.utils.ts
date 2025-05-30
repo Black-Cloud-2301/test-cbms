@@ -3,6 +3,7 @@ import {selectAutocompleteMulti, selectDate} from './fill.utils';
 import {getDateFormatRegex, parseDateFromString} from './date.utils';
 import {IValidateTableColumn} from '../constants/validate-table/validate-table.constants';
 import {IAppParam} from '../constants/interface';
+import {screenshot} from './index';
 
 interface IValidateInput {
   locator: Locator;
@@ -50,7 +51,7 @@ export const validateInputText = async ({locator, searchValue, maxLength = 200}:
   }
 };
 
-export const validateInputNumber = async ({locator, searchValue, maxLength = 13}: IValidateInput) => {
+export const validateInputNumber = async ({locator, searchValue, maxLength = 16}: IValidateInput) => {
   // Tập ký tự test: chữ cái, số, đặc biệt
   const characters =
     'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/`~';
@@ -191,15 +192,20 @@ const checkResponse = async ({page, url, searchObject, conditions}: ISearchCheck
 
       } else {
         const expected = String(value).toLowerCase();
-        console.log('expected',expected)
+        console.log('expected', expected)
         const hasMatch = fields.some(field => {
           const actual = String(item[field] ?? '').toLowerCase();
-          console.log('actual',actual)
+          console.log('field', field)
+          console.log('actual', actual)
 
           return match === 'EXACT'
             ? actual === expected
             : actual.includes(expected);
         });
+        if (!hasMatch) {
+          await screenshot(page, 'policy');
+          await page.pause();
+        }
 
         expect(hasMatch).toBeTruthy();
       }
@@ -309,7 +315,7 @@ const checkResponseMultiSelect = async ({page, url, searchObject, conditions}: I
 export const validateAutocompleteMulti = async ({locator, searchValue, title}: IValidateInput) => {
   const value = await locator
     .locator('auto-complete-multi')
-    .filter({ hasText: title })
+    .filter({hasText: title})
     .locator('input[type="text"]')
     .first()
     .inputValue();
@@ -317,7 +323,7 @@ export const validateAutocompleteMulti = async ({locator, searchValue, title}: I
   expect(value).toEqual(searchValue);
 };
 
-export const validateDataTable = async(page: Page, columns:IValidateTableColumn[], params: Record<string, IAppParam[]>) => {
+export const validateDataTable = async (page: Page, columns: IValidateTableColumn[], params: Record<string, IAppParam[]>) => {
   let tableRow = page.locator('tbody tr');
   let countBidder = await tableRow.count();
 
@@ -327,13 +333,13 @@ export const validateDataTable = async(page: Page, columns:IValidateTableColumn[
     for (const item of columns) {
       const cell = row.locator('td').nth(colIndex);
       const text = await cell.innerText();
-      if(item.require) {
+      if (item.require) {
         expect(text.trim().length).toBeGreaterThan(0);
       }
       switch (item.type) {
         case 'text':
-          if(item.optionValue) {
-            const optionValues = Array.isArray(item.optionValue) ? item.optionValue : params[item.optionValue]?.map(a=>a.label);
+          if (item.optionValue) {
+            const optionValues = Array.isArray(item.optionValue) ? item.optionValue : params[item.optionValue]?.map(a => a.label);
             expect(optionValues).toContain(text);
           }
           break;
@@ -345,11 +351,11 @@ export const validateDataTable = async(page: Page, columns:IValidateTableColumn[
           break;
         case 'link':
           const requiredClasses = ['cursor-pointer', 'text-blue-400', 'underline'];
-            const classAttr = await cell.getAttribute('class');
-            const actual = classAttr?.split(/\s+/) ?? [];
-            for (const cls of requiredClasses) {
-              expect(actual).toContain(cls);
-            }
+          const classAttr = await cell.getAttribute('class');
+          const actual = classAttr?.split(/\s+/) ?? [];
+          for (const cls of requiredClasses) {
+            expect(actual).toContain(cls);
+          }
           break;
         case 'date':
           const dateText = await cell.innerText();

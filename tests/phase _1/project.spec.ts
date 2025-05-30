@@ -8,8 +8,7 @@ import {IAppParam} from '../../constants/interface';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {validateProjectTable} from '../../constants/validate-table/policy.constants';
-import {formatDateToString} from '../../utils/date.utils';
-import {getGlobalVariable, screenshot} from '../../utils';
+import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 
 const PROJECT_NAME = `TA autotest dự án`;
 
@@ -25,7 +24,7 @@ test.describe('test project', () => {
     let count = 1;
     if (rowCount > 0) {
       const row = tableRow.first();
-      const oldName = await row.locator('td').nth(3).innerText();
+      const oldName = await row.locator('td').nth(4).innerText();
       const match = oldName.match(/dự án (\d+)/i);
       count = match ? parseInt(match[1]) + 1 : 1;
     }
@@ -60,7 +59,7 @@ test.describe('test project', () => {
       url: URL_BE_BASE + '/project/search',
       searchObject: {policyTotalInvestmentFrom: searchValue},
       type: 'CURRENCY',
-      validateInput: {locator, searchValue, maxLength: 13},
+      validateInput: {locator, searchValue, maxLength: 16},
       conditions: [{fields: ['policyTotalInvestment'], value: searchValue, match: 'MORE_THAN_EQUAL'}]
     });
     await locator.clear();
@@ -73,7 +72,7 @@ test.describe('test project', () => {
       url: URL_BE_BASE + '/project/search',
       searchObject: {policyTotalInvestmentTo: searchValue},
       type: 'CURRENCY',
-      validateInput: {locator, searchValue, maxLength: 13},
+      validateInput: {locator, searchValue, maxLength: 16},
       conditions: [{fields: ['policyTotalInvestment'], value: searchValue, match: 'LESS_THAN_EQUAL'}]
     });
     await locator.clear();
@@ -248,7 +247,7 @@ test.describe('test project', () => {
 })
 
 test('create project', async ({page}) => {
-  await login(page, '/BIDDING_PROJECT', USERS.NHUNG);
+  await login(page, '/BIDDING_PROJECT');
   await search(page);
   await page.getByRole('button', {name: 'Thêm mới'}).click();
   const mainDialog = page.getByRole('dialog', {name: 'Tạo mới dự án'});
@@ -262,7 +261,7 @@ test('create project', async ({page}) => {
     const match = oldName.match(/dự án (\d+)/i);
     count = match ? parseInt(match[1]) + 1 : 1;
   }
-  const nameSearch = getGlobalVariable('policyName') + ` ${count}`;
+  const nameSearch = getGlobalVariable('projectName') + ` ${count}`;
   await createProject(page, mainDialog, nameSearch);
 });
 
@@ -322,12 +321,16 @@ const createProject = async (page: Page, mainDialog: Locator, nameSearch?: strin
     await search(page, nameSearch);
   }
   await fillText(mainDialog, 'projectName', nameSearch);
-  await selectAutocompleteMulti(page, mainDialog, 'Chủ trương', 'Tìm kiếm chủ trương', getGlobalVariable('currentPolicyName'), 'policy/doSearchDistinct');
+  await selectAutocompleteMulti(page, mainDialog, 'Chủ trương', 'Tìm kiếm chủ trương', getGlobalVariable('lastPolicyName'), 'policy/doSearchDistinct');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'projectDecisionNumber', `QD_PD_DA_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'projectDate');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
   await selectOption(page, mainDialog, 'projectApprovedBy', '1. HĐQT');
+  await selectFile({
+    locator: mainDialog,
+    value: 'assets/files/sample-2.pdf',
+    fileType: '07',
+  });
   await saveForm({page, dialog: mainDialog});
 }
 
@@ -360,7 +363,8 @@ const appraisal = async (page: Page, nameSearch?: string) => {
   let rowCount = await tableRow.count();
   if (rowCount > 0) {
     const row = tableRow.first();
-    await row.getByTitle('Thẩm định dự án', {exact: true}).click();
+    await row.getByTitle('Xem chi tiết', {exact: true}).click();
+    await page.getByRole('button', {name: 'Thẩm định'}).click();
     const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận thẩm định dự án'});
     await saveForm({
       page,
@@ -375,13 +379,16 @@ const appraisal = async (page: Page, nameSearch?: string) => {
       await search(page);
       for (let i = 0; i < rowCount; i++) {
         const row = tableRow.nth(i);
-        const statusText = await row.locator('td').nth(4).innerText(); // cột "Trạng thái"
+        const statusText = await row.locator('td').nth(5).innerText(); // cột "Trạng thái"
         if (i === 0)
           await expect(row.getByTitle('Điều chỉnh dự án')).toHaveCount(1);
         else
           await expect(row.getByTitle('Điều chỉnh dự án')).toHaveCount(0);
         expect(statusText.includes('3. Đã thẩm định')).toBeTruthy();
       }
+    }
+    if (nameSearch) {
+      setGlobalVariable('lastProjectName', nameSearch);
     }
   }
 }
@@ -403,7 +410,6 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   await fillText(mainDialog, 'projectDecisionNumber', `QD_DC_DA_TA_AUTOTEST_${rowCount + 1}_DC`);
   await selectDate(page, mainDialog, 'projectDate');
   await selectOption(page, mainDialog, 'projectApprovedBy', '1. HĐQT');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
   await saveForm({page, dialog: mainDialog, successText: 'Điều chỉnh dự án thành công'})
   rowCount = await tableRow.count();
   expect(rowCount > 1);
@@ -411,7 +417,7 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   let countStatusNew = 0;
   for (let i = 0; i < rowCount; i++) {
     const row = tableRow.nth(i);
-    const statusText = await row.locator('td').nth(4).innerText(); // cột "Trạng thái"
+    const statusText = await row.locator('td').nth(5).innerText(); // cột "Trạng thái"
     if (statusText.includes('1. Mới tạo')) {
       countStatusNew++;
 
