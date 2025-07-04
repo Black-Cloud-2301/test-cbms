@@ -1,4 +1,4 @@
-import {Locator, Page} from '@playwright/test';
+import {expect, Locator, Page} from '@playwright/test';
 import {ICreate} from '../constants/interface';
 import {CBMS_MODULE} from '../constants/common';
 
@@ -39,9 +39,24 @@ export const fillText = async (locator: Locator, id: string, value: string) => {
   await currentInput.clear();
   await currentInput.fill(value);
 }
+export const fillTextV2 = async (locator: Locator, name: string, value: string) => {
+  const currentInput = locator.locator(`input[name="${name}"]`);
+  await currentInput.clear();
+  await currentInput.fill(value);
+}
+export const fillEditor = async (locator: Locator, id: string, value: string) => {
+  const currentInput = locator.locator(`#${id} div.ql-editor`);
+  await currentInput.clear();
+  await currentInput.fill(value);
+}
 
 export const fillNumber = async (locator: Locator, id: string, value: string) => {
   const currentInput = locator.locator(`#${id}`);
+  await currentInput.clear();
+  await currentInput.pressSequentially(value);
+}
+export const fillNumberV2 = async (locator: Locator, name: string, value: string) => {
+  const currentInput = locator.locator('input-v2').filter({hasText: name}).locator('input');
   await currentInput.clear();
   await currentInput.pressSequentially(value);
 }
@@ -56,6 +71,27 @@ export const selectOption = async (page: Page, locator: Locator, id: string, val
   await page.waitForSelector('[role="listbox"]', {state: 'detached'});
 }
 
+export const selectOptionV2 = async (page: Page, locator: Locator, labelText: string, value: string, index: number = 0) => {
+  const combo = locator
+    .locator(`select-filter`).filter({hasText: labelText}).locator('span[role="combobox"]').nth(index);
+
+  await expect(combo).toBeVisible();       // chắc chắn tìm được
+
+  // 2️⃣ Mở dropdown
+  await combo.click();
+  await page.waitForSelector('[role="listbox"]', {state: 'visible'});
+
+  // 3️⃣ (tùy) gõ vào searchbox
+  const searchBox = page.locator('.p-dropdown-panel').getByRole('searchbox');
+  if (await searchBox.count()) {
+    await searchBox.fill(value);
+  }
+
+  // 4️⃣ Chọn option
+  await page.getByRole('option', { name: value, exact: true }).click();
+  await page.waitForSelector('[role="listbox"]', { state: 'detached' });
+}
+
 export const selectDate = async (page: Page, locator: Locator, id: string, value?: string) => {
   const currentInput = locator.locator(`input[name="${id}"]`);
   const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
@@ -67,6 +103,26 @@ export const selectDate = async (page: Page, locator: Locator, id: string, value
     await currentInput.clear();
     await currentInput.pressSequentially(value);
     // await datePickerCalendar.locator('span.p-highlight').first().click();
+  } else {
+    await currentInput.click();
+    await datePickerCalendar.locator('td.p-datepicker-today').first().click();
+    await page.getByRole('dialog', {name: 'Choose Date'}).waitFor({state: 'detached'});
+  }
+}
+
+export const selectDateV2 = async (page: Page, locator: Locator, labelText: string, value?: string, mode:"date"|"year" = "date", index: number = 0) => {
+  const datePicker = locator.locator(`date-picker-v2[ng-reflect-label="${labelText}"]`).nth(index);
+  const currentInput = datePicker.locator('input[role="combobox"]');
+  // console.log(await currentInput.evaluate(el => el.outerHTML));
+  const datePickerCalendar = mode === 'date' ? page.locator('[role="grid"].p-datepicker-calendar') : page.locator('div.p-yearpicker');
+  const timesIcon = currentInput.locator('..').locator('timesicon.p-calendar-clear-icon')
+  if (await timesIcon.isVisible()) {
+    await timesIcon.click();
+  }
+  if (value) {
+    await currentInput.clear();
+    await currentInput.pressSequentially(value);
+    await datePickerCalendar.locator('span.p-highlight').first().click();
   } else {
     await currentInput.click();
     await datePickerCalendar.locator('td.p-datepicker-today').first().click();
@@ -90,16 +146,28 @@ export const selectFile = async ({
 }
 
 export const selectAutocompleteMulti = async (
-  page: Page,
-  locator: Locator,
-  title: string,
-  dialogTitle: string,
-  value: string,
-  api: string) => {
+  {page, locator, title, dialogTitle, value, api, multiple = false}:{
+    page: Page,
+    locator: Locator,
+    title: string,
+    dialogTitle: string,
+    value: string,
+    api: string,
+    multiple?: boolean
+  }) => {
   await locator.locator('auto-complete-multi').filter({hasText: title}).locator('span').nth(1).click();
   const dialog = page.getByRole('dialog').filter({hasText: dialogTitle});
   await dialog.locator(`input[name=keySearch]`).fill(value);
   await dialog.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}${api}`) && response.status() === 200);
-  await dialog.getByRole('row').nth(1).locator('a').click();
+  if(multiple) {
+    let tableRow = dialog.locator('tbody tr');
+    let rowCount = await tableRow.count();
+    expect(rowCount > 0);
+    const row = tableRow.first();
+    await row.locator('p-tablecheckbox').click();
+    await dialog.getByRole('button',{name:'Ghi lại'}).click();
+  } else {
+    await dialog.getByRole('row').nth(1).locator('a').click();
+  }
 }

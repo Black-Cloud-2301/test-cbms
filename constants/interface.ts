@@ -1,3 +1,5 @@
+import {Locator, Page} from '@playwright/test';
+
 export interface ICreate {
     type: 'autocomplete' | 'select' | 'multiselect' | 'text' | 'date';
     field: string;
@@ -49,4 +51,14 @@ export interface IAppParam {
   label: string;
   code: string;
   parOrder: number;
+}
+
+export interface SaveFormOptions {
+  page: Page;
+  dialog: Locator;
+  buttonName?: string;
+  url?: string;
+  successText?: string;
+  feature?: string;
+  nameSearch?: string;
 }

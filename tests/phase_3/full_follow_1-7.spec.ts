@@ -2,17 +2,255 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {IUser, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
+import {getGlobalVariable} from '../../utils';
 
+// const contractorName = getGlobalVariable('lastContractorName');
 const contractorName = CONTRACTOR_NAME_SEARCH;
 const totalImport = 6;
 
 test('bid evaluation full', async ({page}) => {
   test.setTimeout(180000);
 
-  await login(page, '/CBMS_BID_EVALUATION', USERS.MANH);
+  await evaluate(page);
+})
+
+test('reevaluate', async ({page}) => {
+  test.setTimeout(120000);
+
+  await reEvaluate(page);
+})
+
+test('run step', async ({page}) => {
+  // await saveStepFifth(page, true);
+  await saveStepSix(page, true);
+})
+
+const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/bid-evaluation/save`, successText: string = 'Lưu dữ liệu thành công') => {
+  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  let resPromise = await page.waitForResponse(url);
+  let resJson = await resPromise.json();
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
+  await alertSuccess.locator('.p-toast-icon-close').click();
+  // await page.pause();
+}
+
+const loginWithRoleAndSearch = async (page: Page, user: IUser, isNew: boolean = false) => {
+  if (isNew) {
+    await login(page, '/CBMS_BID_EVALUATION/INVEST', user)
+  } else {
+    await loginWithRole(page, user, '/CBMS_BID_EVALUATION/INVEST');
+  }
+  await search(page);
+}
+
+const search = async (page: Page) => {
+  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
+  await page.waitForResponse((response) => {
+    const urlMatch = response.url().includes(`${CBMS_MODULE}/contractor/doSearch`);
+    const isOk = response.status() === 200;
+
+    if (!urlMatch || !isOk) return false;
+
+    const request = response.request();
+    const postData = request.postDataJSON(); // Nếu là JSON
+    // const postData = request.postData();  // Nếu raw string
+
+    // Ví dụ: check field cụ thể trong payload
+    return postData?.keySearch === contractorName;
+  });
+  await page.waitForTimeout(500);
+  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
+}
+
+const saveStepSecond = async (page: Page, isNew: boolean = false) => {
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
+  let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá tính hợp lệ'});
+  const tableRow = mainDialog.locator('tbody tr');
+  const ordinalNumbersFirst = ['1', '2.1.1', '2.1.2', '2.1.3', '2.1.4', '2.1.5', '2.1.6']
+  let countBidder = await tableRow.count();
+  for (let i = 0; i < countBidder; i++) {
+    await tableRow.nth(i).getByRole('button').click();
+    for (let j = 0; j < ordinalNumbersFirst.length; j++) {
+      const number = ordinalNumbersFirst[j];
+      await evaluateDialog.getByRole('cell', {
+        name: number,
+        exact: true
+      }).locator('..').getByRole('combobox', {name: '--Chọn--'}).click();
+      if (i === 0 && j === 0) {
+        await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
+      } else {
+        await page.getByRole('option', {name: 'Đạt', exact: true}).click();
+      }
+      await page.waitForTimeout(100);
+    }
+    await page.getByRole('button', {name: 'Lưu'}).click();
+  }
+  await saveForm(page, mainDialog);
+}
+
+const saveStepThird = async (page: Page, isNew: boolean = false) => {
+  await search(page);
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
+  const tableRow = mainDialog.locator('tbody tr');
+  await checkCountBidder(page, 1);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+
+  const ordinalNumbersSecond = ['1', '2', '3.1', '3.2', '4', '5']
+  let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá về năng lực kinh nghiệm'});
+  let countBidder = await tableRow.count();
+  for (let i = 0; i < countBidder; i++) {
+    const button = tableRow.nth(i).getByRole('button');
+    if (await button.isDisabled()) {
+      continue;
+    }
+    await button.click();
+    for (let j = 0; j < ordinalNumbersSecond.length; j++) {
+      const number = ordinalNumbersSecond[j];
+      await evaluateDialog.getByRole('cell', {
+        name: number,
+        exact: true,
+      }).locator('..').getByRole('combobox', {name: '--Chọn--'}).click();
+      if (i === 0 && j === 0) {
+        await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
+      } else {
+        await page.getByRole('option', {name: 'Đạt', exact: true}).click();
+      }
+      await page.waitForTimeout(100);
+    }
+    await page.getByRole('button', {name: 'Lưu'}).click();
+  }
+  await saveForm(page, mainDialog);
+}
+
+const saveStepFourth = async (page: Page, isNew: boolean = false) => {
+  await loginWithRoleAndSearch(page, USERS.HONG, isNew);
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
+  const tableRow = mainDialog.locator('tbody tr');
+  await checkCountBidder(page, 2);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  let countBidder = await tableRow.count();
+  for (let i = 0; i < countBidder; i++) {
+    let currentRow = tableRow.nth(i);
+    let combobox = currentRow.locator('span#technicalAssessment');
+    // if (await combobox.isDisabled()) {
+    //   continue;
+    // }
+    await combobox.click();
+    if (i === 0) {
+      await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
+    } else {
+      await page.getByRole('option', {name: 'Đạt', exact: true}).click();
+    }
+    await currentRow.locator('#technicalAssessmentComment').fill('Nhận xét của tổ chuyên gia ' + (i + 1));
+  }
+  await saveForm(page, mainDialog);
+}
+
+const saveStepFifth = async (page: Page, isNew: boolean = false) => {
+  await loginWithRoleAndSearch(page, USERS.CAM_NHUNG, isNew);
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
+  const tableRow = mainDialog.locator('tbody tr');
+  await checkCountBidder(page, 3);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  let countBidder = await tableRow.count();
+  for (let i = 0; i < countBidder; i++) {
+    let currentRow = tableRow.nth(i);
+    if (i < countBidder - 1) {
+      await currentRow.locator('#isDiscount').first().click();
+    } else {
+      await currentRow.locator('#endowPercent').pressSequentially('10');
+    }
+  }
+  // await page.pause();
+  await saveForm(page, mainDialog);
+}
+
+const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boolean = false) => {
+  await loginWithRoleAndSearch(page, USERS.NHUNG, isNew);
+
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
+  await checkCountBidder(page, 4);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.waitForTimeout(200);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.waitForTimeout(200);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+  await page.waitForTimeout(200);
+  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
+
+  await mainDialog.getByRole('button', {name: 'Chọn file'});
+
+  if (!reevaluate) {
+    await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
+  }
+
+  await mainDialog.getByRole('button', {name: 'Hoàn thành đánh giá'}).click();
+
+
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/bid-evaluation/save`);
+  let resJson = await resPromise.json();
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
+  await alertSuccess.locator('.p-toast-icon-close').click();
+}
+
+const checkCountBidder = async (page: Page, step: number) => {
+  // await page.pause();
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
+  const tableRow = mainDialog.locator('tbody tr').first();
+  switch (step) {
+    case 0:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      break;
+    case 1:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      break;
+    case 2:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 2} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
+      break;
+    case 3:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - 2}/${totalImport - 2} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 3} nhà thầu`)
+      break;
+    case 4:
+      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
+      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
+      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - 2}/${totalImport - 2} nhà thầu`)
+      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - 3}/${totalImport - 3} nhà thầu`)
+      break;
+    default:
+      break;
+  }
+}
+
+export const evaluate = async (page: Page) => {
+  await login(page, '/CBMS_BID_EVALUATION/INVEST', USERS.MANH);
   await search(page);
 
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
 
   // upload file mailing 2
   await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bm_mailing_danh_gia.xlsx');
@@ -40,20 +278,19 @@ test('bid evaluation full', async ({page}) => {
   // STEP 4
   await saveStepFourth(page);
 
+  // await page.pause();
   // STEP 5
   await saveStepFifth(page);
   // STEP 6
   await saveStepSix(page);
-})
+}
 
-test('reevaluate', async ({page}) => {
-  test.setTimeout(120000);
-
-  await login(page, '/CBMS_BID_EVALUATION', USERS.NHUNG);
+export const reEvaluate = async (page: Page) => {
+  await login(page, '/CBMS_BID_EVALUATION/INVEST', USERS.NHUNG);
   await search(page);
   const reEvaluateButton = page.getByRole('button', {name: 'Đánh giá lại'});
 
-  let mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
+  let mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   await page.waitForTimeout(1000);
   if (await reEvaluateButton.isVisible()) {
     await reEvaluateButton.click();
@@ -187,230 +424,4 @@ test('reevaluate', async ({page}) => {
 
   // STEP 6
   await saveStepSix(page, false, true);
-})
-
-test('run step', async ({page}) => {
-  // await saveStepFifth(page, true);
-  await saveStepSix(page, true);
-})
-
-const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/bid-evaluation/save`, successText: string = 'Lưu dữ liệu thành công') => {
-  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
-
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-  let resPromise = await page.waitForResponse(url);
-  let resJson = await resPromise.json();
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
-  await alertSuccess.locator('.p-toast-icon-close').click();
-  // await page.pause();
-}
-
-const loginWithRoleAndSearch = async (page: Page, user: IUser, isNew: boolean = false) => {
-  if (isNew) {
-    await login(page, '/CBMS_BID_EVALUATION', user)
-  } else {
-    await loginWithRole(page, user, '/CBMS_BID_EVALUATION');
-  }
-  await search(page);
-}
-
-const search = async (page: Page) => {
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse((response) => {
-    const urlMatch = response.url().includes(`${CBMS_MODULE}/contractor/doSearch`);
-    const isOk = response.status() === 200;
-
-    if (!urlMatch || !isOk) return false;
-
-    const request = response.request();
-    const postData = request.postDataJSON(); // Nếu là JSON
-    // const postData = request.postData();  // Nếu raw string
-
-    // Ví dụ: check field cụ thể trong payload
-    return postData?.keySearch === contractorName;
-  });
-  await page.waitForTimeout(500);
-  await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
-}
-
-const saveStepSecond = async (page: Page, isNew: boolean = false) => {
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá tính hợp lệ'});
-  const tableRow = mainDialog.locator('tbody tr');
-  const ordinalNumbersFirst = ['1', '2.1.1', '2.1.2', '2.1.3', '2.1.4', '2.1.5', '2.1.6']
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    await tableRow.nth(i).getByRole('button').click();
-    for (let j = 0; j < ordinalNumbersFirst.length; j++) {
-      const number = ordinalNumbersFirst[j];
-      await evaluateDialog.getByRole('cell', {
-        name: number,
-        exact: true
-      }).locator('..').getByRole('combobox', {name: '--Chọn--'}).click();
-      if (i === 0 && j === 0) {
-        await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
-      } else {
-        await page.getByRole('option', {name: 'Đạt', exact: true}).click();
-      }
-      await page.waitForTimeout(100);
-    }
-    await page.getByRole('button', {name: 'Lưu'}).click();
-  }
-  await saveForm(page, mainDialog);
-}
-
-const saveStepThird = async (page: Page, isNew: boolean = false) => {
-  await search(page);
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  const tableRow = mainDialog.locator('tbody tr');
-  await checkCountBidder(page, 1);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
-  const ordinalNumbersSecond = ['1', '2', '3.1', '3.2', '4', '5']
-  let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá về năng lực kinh nghiệm'});
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    const button = tableRow.nth(i).getByRole('button');
-    if (await button.isDisabled()) {
-      continue;
-    }
-    await button.click();
-    for (let j = 0; j < ordinalNumbersSecond.length; j++) {
-      const number = ordinalNumbersSecond[j];
-      await evaluateDialog.getByRole('cell', {
-        name: number,
-        exact: true,
-      }).locator('..').getByRole('combobox', {name: '--Chọn--'}).click();
-      if (i === 0 && j === 0) {
-        await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
-      } else {
-        await page.getByRole('option', {name: 'Đạt', exact: true}).click();
-      }
-      await page.waitForTimeout(100);
-    }
-    await page.getByRole('button', {name: 'Lưu'}).click();
-  }
-  await saveForm(page, mainDialog);
-}
-
-const saveStepFourth = async (page: Page, isNew: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.HONG, isNew);
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  const tableRow = mainDialog.locator('tbody tr');
-  await checkCountBidder(page, 2);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    let currentRow = tableRow.nth(i);
-    let combobox = currentRow.locator('span#technicalAssessment');
-    // if (await combobox.isDisabled()) {
-    //   continue;
-    // }
-    await combobox.click();
-    if (i === 0) {
-      await page.getByRole('option', {name: 'Không đạt', exact: true}).click();
-    } else {
-      await page.getByRole('option', {name: 'Đạt', exact: true}).click();
-    }
-    await currentRow.locator('#technicalAssessmentComment').fill('Nhận xét của tổ chuyên gia ' + (i + 1));
-  }
-  await saveForm(page, mainDialog);
-}
-
-const saveStepFifth = async (page: Page, isNew: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.CAM_NHUNG, isNew);
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  const tableRow = mainDialog.locator('tbody tr');
-  await checkCountBidder(page, 3);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  let countBidder = await tableRow.count();
-  for (let i = 0; i < countBidder; i++) {
-    let currentRow = tableRow.nth(i);
-    if (i < countBidder - 1) {
-      await currentRow.locator('#isDiscount').first().click();
-    } else {
-      await currentRow.locator('#endowPercent').pressSequentially('10');
-    }
-  }
-  // await page.pause();
-  await saveForm(page, mainDialog);
-}
-
-const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.NHUNG, isNew);
-
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  await checkCountBidder(page, 4);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await page.waitForTimeout(200);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await page.waitForTimeout(200);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-  await page.waitForTimeout(200);
-  await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
-
-  await mainDialog.getByRole('button', {name: 'Chọn file'});
-
-  if (!reevaluate) {
-    await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
-  }
-
-  await mainDialog.getByRole('button', {name: 'Hoàn thành đánh giá'}).click();
-
-
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-  let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/bid-evaluation/save`);
-  let resJson = await resPromise.json();
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-}
-
-const checkCountBidder = async (page: Page, step: number) => {
-  // await page.pause();
-  const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ mời thầu'});
-  const tableRow = mainDialog.locator('tbody tr').first();
-  switch (step) {
-    case 0:
-      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
-      break;
-    case 1:
-      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 1} nhà thầu`)
-      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
-      break;
-    case 2:
-      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
-      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 2} nhà thầu`)
-      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - totalImport} nhà thầu`)
-      break;
-    case 3:
-      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
-      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - 2}/${totalImport - 2} nhà thầu`)
-      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - totalImport}/${totalImport - 3} nhà thầu`)
-      break;
-    case 4:
-      await expect(tableRow.locator('td').nth(1)).toHaveText(`Hoàn thành ${totalImport}/${totalImport} nhà thầu`)
-      await expect(tableRow.locator('td').nth(2)).toHaveText(`Hoàn thành ${totalImport - 1}/${totalImport - 1} nhà thầu`)
-      await expect(tableRow.locator('td').nth(3)).toHaveText(`Hoàn thành ${totalImport - 2}/${totalImport - 2} nhà thầu`)
-      await expect(tableRow.locator('td').nth(4)).toHaveText(`Hoàn thành ${totalImport - 3}/${totalImport - 3} nhà thầu`)
-      break;
-    default:
-      break;
-  }
 }

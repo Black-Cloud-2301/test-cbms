@@ -1,5 +1,5 @@
 import {expect, Locator, Page} from '@playwright/test';
-import {selectAutocompleteMulti, selectDate} from './fill.utils';
+import {selectAutocompleteMulti, selectDate, selectDateV2} from './fill.utils';
 import {getDateFormatRegex, parseDateFromString} from './date.utils';
 import {IValidateTableColumn} from '../constants/validate-table/validate-table.constants';
 import {IAppParam} from '../constants/interface';
@@ -12,6 +12,9 @@ interface IValidateInput {
   title?: string;
   dialogTitle?: string;
   apiUrl?: string;
+  name?: string;
+  index?: number;
+  allowClear?: boolean;
 }
 
 interface ISearchCheckOptions {
@@ -51,6 +54,35 @@ export const validateInputText = async ({locator, searchValue, maxLength = 200}:
   }
 };
 
+export const validateInputTextV2 = async ({locator, searchValue, name, index = 0, maxLength = 200}: IValidateInput) => {
+  const currentLocator = locator.locator(`input[name="${name}"]`).nth(index);
+  // Tập ký tự test: chữ cái, số, đặc biệt
+  const characters =
+    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/`~';
+
+  // Lặp từng ký tự và nhập vào input
+  for (let i = 0; i <= maxLength; i++) {
+    const char = characters[i % characters.length]; // Lặp lại nếu hết ký tự
+    await currentLocator.press(char);
+  }
+
+  const value = await currentLocator.inputValue(); // Lấy giá trị thực tế trong input
+
+  expect(value.length).toBe(maxLength); // Nếu hệ thống cắt đúng tại maxLength
+
+  if (searchValue) {
+    await currentLocator.clear();
+    await currentLocator.fill(typeof searchValue === 'number' ? searchValue.toString() : searchValue);
+  }
+};
+
+const clearInputText = async ({locator, name, index = 0, allowClear}: IValidateInput) => {
+  if(allowClear) {
+    const currentLocator = locator.locator(`input[name="${name}"]`).nth(index);
+    await currentLocator.clear();
+  }
+}
+
 export const validateInputNumber = async ({locator, searchValue, maxLength = 16}: IValidateInput) => {
   // Tập ký tự test: chữ cái, số, đặc biệt
   const characters =
@@ -76,7 +108,7 @@ export const checkSearchResponse = async ({
                                             searchObject,
                                             type,
                                             validateInput,
-                                            conditions
+                                            conditions,
                                           }: ISearchCheckOptions) => {
 
   switch (type) {
@@ -128,7 +160,14 @@ export const checkSearchResponse = async ({
       }
       break;
     case 'AUTOCOMPLETE_MULTI':
-      await selectAutocompleteMulti(page, validateInput.locator, validateInput.title, validateInput.dialogTitle, validateInput.searchValue as string, validateInput.apiUrl)
+      await selectAutocompleteMulti({
+        page,
+        locator: validateInput.locator,
+        title: validateInput.title,
+        dialogTitle: validateInput.dialogTitle,
+        value: validateInput.searchValue as string,
+        api: validateInput.apiUrl
+      })
       await validateAutocompleteMulti(validateInput)
       await checkResponse({page, url, searchObject, conditions});
       break;
@@ -141,8 +180,89 @@ export const checkSearchResponse = async ({
       await checkResponse({page, url, searchObject, conditions});
       break;
   }
+};export const checkSearchResponseV2 = async ({
+                                            page,
+                                            url,
+                                            searchObject,
+                                            type,
+                                            validateInput,
+                                            conditions,
+                                          }: ISearchCheckOptions) => {
 
-
+  switch (type) {
+    case 'CURRENCY':
+      await validateInputNumber(validateInput);
+      await checkResponse({page, url, searchObject, conditions});
+      break;
+    case 'SELECT': {
+      await validateInput.locator.click();
+      await page.waitForSelector('[role="listbox"]', {state: 'visible'});
+      const list = page.getByRole('option');
+      const count = await list.count();
+      for (let i = 0; i < count; i++) {
+        const row = list.nth(i);
+        if (i === 0) {
+          await row.click();
+          await checkResponseMultiSelect({page, url, searchObject, conditions});
+        } else {
+          await validateInput.locator.click();
+          await page.waitForTimeout(1000);
+          await row.click();
+          await checkResponseMultiSelect({page, url, searchObject, conditions});
+        }
+      }
+    }
+      break;
+    case 'MULTI_SELECT':
+      const locator = validateInput.locator.locator("multi-select").filter({hasText: validateInput.name}).locator('p-multiselect').nth(validateInput.index || 0);
+      await locator.click();
+      await page.waitForSelector('[role="listbox"]', {state: 'visible'});
+      const list = page.getByRole('option');
+      const count = await list.count();
+      for (let i = 0; i < count; i++) {
+        const row = list.nth(i);
+        if (i === 0) {
+          await row.click();
+          await checkResponseMultiSelect({page, url, searchObject, conditions});
+        } else if (i === 1) {
+          await locator.click();
+          await page.waitForTimeout(1000);
+          await list.nth(i - 1).click();
+          await row.click();
+          await checkResponseMultiSelect({page, url, searchObject, conditions});
+        } else if (i === 2) {
+          await locator.click();
+          await page.waitForTimeout(1000);
+          await row.click();
+          await checkResponseMultiSelect({page, url, searchObject, conditions});
+        }
+      }
+      if(validateInput.allowClear) {
+        await locator.locator('timesicon').locator('svg').click();
+      }
+      break;
+    case 'AUTOCOMPLETE_MULTI':
+      await selectAutocompleteMulti({
+        page,
+        locator: validateInput.locator,
+        title: validateInput.title,
+        dialogTitle: validateInput.dialogTitle,
+        value: validateInput.searchValue as string,
+        api: validateInput.apiUrl
+      })
+      await validateAutocompleteMulti(validateInput)
+      await checkResponse({page, url, searchObject, conditions});
+      break;
+    case 'DATE':
+      await selectDateV2(page, validateInput.locator, validateInput.name, validateInput.searchValue as string)
+      await checkResponseDate({page, url, searchObject, conditions});
+      break;
+    default:
+      await validateInputTextV2(validateInput);
+      await checkResponse({page, url, searchObject, conditions});
+      await clearInputText(validateInput);
+      break;
+  }
 };
 
 const checkResponse = async ({page, url, searchObject, conditions}: ISearchCheckOptions) => {
@@ -192,11 +312,11 @@ const checkResponse = async ({page, url, searchObject, conditions}: ISearchCheck
 
       } else {
         const expected = String(value).toLowerCase();
-        console.log('expected', expected)
+        // console.log('expected', expected)
         const hasMatch = fields.some(field => {
           const actual = String(item[field] ?? '').toLowerCase();
-          console.log('field', field)
-          console.log('actual', actual)
+          // console.log('field', field)
+          // console.log('actual', actual)
 
           return match === 'EXACT'
             ? actual === expected

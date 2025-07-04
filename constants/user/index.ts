@@ -12,12 +12,12 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   },
   PC: {
     code: '270504',
-    password: 'Cntt@1334',
+    password: 'Cntt@1335',
     name: 'Lê Thị Ngọc Ánh'
   },
   HONG: {
     code: '192981',
-    password: 'CNTT2025a@*HH',
+    password: 'Hoanganh2025a@*HH',
     name: 'Bùi Thị Hồng'
   },
   CAM_NHUNG: {
@@ -27,7 +27,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   },
   TUOI: {
     code: '293289',
-    password: 'Vcc@2026',
+    password: 'Vcc@2023',
     name: 'Tô Thị Thúy Tươi'
   },
   MANH: {

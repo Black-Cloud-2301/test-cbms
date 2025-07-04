@@ -1,20 +1,20 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
+import {fillEditor, fillNumber, fillTextV2, selectDateV2, selectFile, selectOptionV2} from '../../utils/fill.utils';
 import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
 import {URL_BE_BASE} from '../../constants/common';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {validatePolicyTable} from '../../constants/validate-table/policy.constants';
-import {IAppParam} from '../../constants/interface';
+import {IAppParam, SaveFormOptions} from '../../constants/interface';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
 
 test.describe('test policy', () => {
   test('create policy full flow', async ({page}) => {
     test.setTimeout(180000);
-    await login(page, '/BIDDING_POLICY');
-    await search(page);
+    await login(page, '/BIDDING_POLICY_NEW');
+    await searchPolicy({page});
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới chủ trương'});
     let tableRow = page.locator('tbody tr');
@@ -28,16 +28,16 @@ test.describe('test policy', () => {
     }
     const nameSearch = getGlobalVariable('policyName') + ` ${count}`
     await createPolicy(page, mainDialog, nameSearch);
-    await submitToAppraisal(page, nameSearch);
-    await appraisal(page, nameSearch);
-    await adjustment(page, nameSearch);
-    await submitToAppraisal(page, nameSearch + ` DC 1`);
-    await appraisal(page, nameSearch + ` DC 1`);
+    await submitToAppraisalPolicy({page, nameSearch});
+    await appraisalPolicy({page, nameSearch});
+    await adjustmentPolicy({page, nameSearch});
+    await submitToAppraisalPolicy({page, nameSearch: nameSearch + ` DC 1`});
+    await appraisalPolicy({page, nameSearch: nameSearch + ` DC 1`});
   });
 
   test('search form', async ({page}) => {
     test.setTimeout(180000);
-    await login(page, '/BIDDING_POLICY');
+    await login(page, '/BIDDING_POLICY_NEW');
     let searchValue: string | number | number[] = 'autotest';
     let locator = page.locator('input#keySearch');
 
@@ -180,7 +180,7 @@ test.describe('test policy', () => {
   })
 
   test('table pageable - ID từ response không trùng', async ({page}) => {
-    await login(page, '/BIDDING_POLICY');
+    await login(page, '/BIDDING_POLICY_NEW');
 
     const pageable = page.locator('span.p-paginator-pages');
     const pageButtons = pageable.locator('button');
@@ -239,7 +239,7 @@ test.describe('test policy', () => {
   test('table visible', async ({page}) => {
     const dataByParType: Record<string, IAppParam[]> = APP_PARAMS;
     await setupAppParams(page, dataByParType);
-    await login(page, '/BIDDING_POLICY');
+    await login(page, '/BIDDING_POLICY_NEW');
     await saveFileParam(page, dataByParType);
 
     await validateDataTable(page, validatePolicyTable, dataByParType);
@@ -247,8 +247,8 @@ test.describe('test policy', () => {
 })
 
 test('create policy', async ({page}) => {
-    await login(page, '/BIDDING_POLICY', USERS.NHUNG);
-    await search(page);
+    await login(page, '/BIDDING_POLICY_NEW', USERS.NHUNG);
+    await searchPolicy({page});
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới chủ trương'});
     let tableRow = page.locator('tbody tr');
@@ -266,22 +266,22 @@ test('create policy', async ({page}) => {
 );
 
 test('policy submit to appraiser', async ({page}) => {
-  await login(page, '/BIDDING_POLICY', USERS.NHUNG);
-  await search(page);
-  await submitToAppraisal(page);
+  await login(page, '/BIDDING_POLICY_NEW', USERS.NHUNG);
+  await searchPolicy({page});
+  await submitToAppraisalPolicy({page});
 })
 
 test('policy appraiser', async ({page}) => {
-  await login(page, '/BIDDING_POLICY', USERS.PC);
-  await search(page);
-  await appraisal(page);
+  await login(page, '/BIDDING_POLICY_NEW', USERS.PC);
+  await searchPolicy({page});
+  await appraisalPolicy({page});
 })
 
 test('policy adjustment', async ({page}) => {
-  await login(page, '/BIDDING_POLICY', USERS.NHUNG);
-  await search(page);
+  await login(page, '/BIDDING_POLICY_NEW', USERS.NHUNG);
+  await searchPolicy({page});
 
-  await adjustment(page);
+  await adjustmentPolicy({page});
 })
 
 const saveForm = async ({
@@ -302,16 +302,11 @@ const saveForm = async ({
   await alertSuccess.locator('.p-toast-icon-close').click();
 };
 
-interface SaveFormOptions {
-  page: Page;
-  dialog: Locator;
-  buttonName?: string;
-  url?: string;
-  successText?: string;
-}
 
-const search = async (page: Page, name?: string) => {
-  await page.locator(`input[name="keySearch"]`).fill(name ? name : getGlobalVariable('policyName'));
+export const searchPolicy = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
+  await page.locator(`input[name="keySearch"]`).fill(nameSearch ? nameSearch : getGlobalVariable('policyName'));
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/policy/doSearch') && response.status() === 200);
 }
@@ -352,36 +347,38 @@ const checkAdjustment = async (page: Page, tableRow: Locator) => {
   }
 }
 
-const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: string) => {
-  await fillText(mainDialog, 'policyName', nameSearch);
-  await selectOption(page, mainDialog, 'projectGroupId', 'Nhóm A');
-  await selectOption(page, mainDialog, 'projectTypeId', 'Đầu tư xây dựng');
-  await selectOption(page, mainDialog, 'quarterFrom', 'I');
-  await fillNumber(mainDialog, 'yearFrom', '2025');
-  await selectOption(page, mainDialog, 'quarterTo', 'I');
-  await fillNumber(mainDialog, 'yearTo', '2026');
-  await fillNumber(mainDialog, 'implementationDate', '1');
-  await selectOption(page, mainDialog, 'dateTypeId', 'Năm');
+export const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: string) => {
+  await fillTextV2(mainDialog, 'policyName', nameSearch);
+  await selectOptionV2(page, mainDialog, 'Nhóm dự án', 'Nhóm A');
+  await selectOptionV2(page, mainDialog, 'Loại dự án', 'Đầu tư xây dựng');
+  await selectOptionV2(page, mainDialog, 'Thời gian triển khai từ', 'I');
+  await selectDateV2(page, mainDialog, 'Năm', '2025', 'year');
+  await selectOptionV2(page, mainDialog, 'Đến', 'I');
+  await selectDateV2(page, mainDialog, 'Năm', '2026', 'year', 1);
+  // await fillNumber(mainDialog, 'implementationDate', '1');
+  await selectOptionV2(page, mainDialog, 'Thời gian theo', 'Năm');
   await fillNumber(mainDialog, 'investmentScale', '100');
-  await selectOption(page, mainDialog, 'unitTypeId', 'm2');
-  await selectOption(page, mainDialog, 'investmentFieldId', 'BTS');
-  await fillNumber(mainDialog, 'projectFunding', '1000000000');
-  await fillText(mainDialog, 'investmentTarget', 'Đầu tư cho vui');
+  await selectOptionV2(page, mainDialog, 'Đơn vị tính', 'm2');
+  await selectOptionV2(page, mainDialog, 'Lĩnh vực đầu tư', 'BTS');
+  await fillTextV2(mainDialog, 'projectFunding', 'Vốn huy động từ thiện');
   await fillNumber(mainDialog, 'totalInvestment', '100000000');
-  await fillText(mainDialog, 'projectLocation', 'Hồ Tây');
-  await fillText(mainDialog, 'note', 'Của Tú Ank đừng đụng zô');
+  await fillTextV2(mainDialog, 'projectLocation', 'Hồ Tây');
+  await fillTextV2(mainDialog, 'note', 'Của Tú Ank đừng đụng zô');
+  await fillEditor(mainDialog, 'investmentTarget', 'Đầu tư cho vui');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  await fillText(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);
-  await selectDate(page, mainDialog, 'policyDate');
-  await selectOption(page, mainDialog, 'approvedBy', '1. HĐQT');
-  await selectFile({locator:mainDialog, value:'assets/files/sample.pdf', fileType:'02'});
-  await selectFile({locator:mainDialog, value:'assets/files/sample-1.pdf',fileType: '01'});
+  await fillTextV2(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);
+  await selectDateV2(page, mainDialog, 'Ngày chủ trương');
+  await selectOptionV2(page, mainDialog, 'Cấp quyết định phê duyệt chủ trương', '1. HĐQT');
+  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '02'});
+  await selectFile({locator: mainDialog, value: 'assets/files/sample-1.pdf', fileType: '01'});
   await saveForm({page, dialog: mainDialog});
 }
 
-const submitToAppraisal = async (page: Page, nameSearch?: string) => {
+export const submitToAppraisalPolicy = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
   if (nameSearch) {
-    await search(page, nameSearch);
+    await searchPolicy({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -394,15 +391,17 @@ const submitToAppraisal = async (page: Page, nameSearch?: string) => {
     page,
     dialog: confirmDialog,
     buttonName: 'Có',
-    url: '**/policy/submit-to-appraiser',
+    url: '**/policy/submitToAppraiser',
     successText: 'Trình thẩm định thành công'
   })
 }
 
-const appraisal = async (page: Page, nameSearch?: string) => {
+export const appraisalPolicy = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
   if (nameSearch) {
-    await loginWithRole(page, USERS.PC, '/BIDDING_POLICY')
-    await search(page, nameSearch);
+    await loginWithRole(page, USERS.PC, '/BIDDING_POLICY_NEW')
+    await searchPolicy({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -417,7 +416,7 @@ const appraisal = async (page: Page, nameSearch?: string) => {
       dialog: confirmDialog,
       buttonName: 'Có',
       url: '**/policy/appraisal',
-      successText: 'Thành công'
+      successText: 'Thẩm định thành công'
     })
     if (nameSearch) {
       setGlobalVariable('lastPolicyName', nameSearch);
@@ -428,10 +427,12 @@ const appraisal = async (page: Page, nameSearch?: string) => {
   }
 }
 
-const adjustment = async (page: Page, nameSearch?: string) => {
+export const adjustmentPolicy = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
   if (nameSearch) {
-    await loginWithRole(page, USERS.NHUNG, '/BIDDING_POLICY')
-    await search(page, nameSearch);
+    await loginWithRole(page, USERS.NHUNG, '/BIDDING_POLICY_NEW')
+    await searchPolicy({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -439,16 +440,16 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   const row = tableRow.first();
   await row.getByTitle('Điều chỉnh chủ trương', {exact: true}).click();
   const mainDialog = page.getByRole('dialog', {name: 'Điều chỉnh thông tin chủ trương'});
-  const oldName = await row.locator('td').nth(3).innerText();
-  const match = oldName.match(/chủ trương (\d+)/i);
+  const oldName = await row.locator('td').nth(4).innerText();
+  const match = oldName.match(/chủ trương DC (\d+)/i);
   let count = match ? parseInt(match[1]) + 1 : 1;
-  await fillText(mainDialog, 'policyName', nameSearch ? nameSearch + ` DC 1` : `${oldName} DC ${count}`);
-  await fillText(mainDialog, 'note', 'Của Tú Ank đừng đụng dô điều chỉnh');
+  await fillTextV2(mainDialog, 'policyName', count > 0? `${oldName.replace(/\d+$/, count.toString())}` : oldName + ' DC ' + count);
+  await fillTextV2(mainDialog, 'note', 'Của Tú Ank đừng đụng dô điều chỉnh');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  await fillText(mainDialog, 'decisionNumber', `QD_TA_AUTOTEST_${rowCount + 1}_DC`);
-  await selectDate(page, mainDialog, 'policyDate');
-  await selectOption(page, mainDialog, 'approvedBy', '1. HĐQT');
-  await saveForm({page, dialog: mainDialog, successText: 'Điều chỉnh chủ trương thành công'})
+  await fillTextV2(mainDialog, 'decisionNumber', `QD_TA_AUTOTEST_${rowCount + 1}_DC`);
+  await selectDateV2(page, mainDialog, 'policyDate');
+  await selectOptionV2(page, mainDialog, 'approvedBy', '1. HĐQT');
+  await saveForm({page, dialog: mainDialog, successText: 'Điều chỉnh chủ trương thành công'});
   rowCount = await tableRow.count();
   expect(rowCount > 1);
 

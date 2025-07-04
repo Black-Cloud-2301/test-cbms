@@ -1,13 +1,63 @@
 import {expect, Locator, Page, test} from '@playwright/test';
-import {login} from '../login';
+import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
 import {CONTRACTOR_NAME_SEARCH, CBMS_MODULE} from '../../constants/common';
+import {getGlobalVariable, screenshot} from '../../utils';
 
+// const contractorName = getGlobalVariable('lastContractorName');
 const contractorName = CONTRACTOR_NAME_SEARCH;
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);
-  await login(page, '/CBMS_DOCUMENT_BY_PID');
+  await importDocumentByPid(page);
+})
+
+test('submit to appraiser', async ({page}) => {
+  await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
+  await documentByPidSubmitToAppraiser(page);
+})
+
+test('verify', async ({page}) => {
+  await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST', USERS.PC);
+  await documentByPidVerify(page);
+})
+
+const saveForm = async (page: Page, dialog: Locator) => {
+  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
+  // await page.pause();
+  // await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
+}
+
+const checkSuccess = async (
+  page: Page,
+  url: string = `**${CBMS_MODULE}/document-by-pid/import`,
+  successText: string = 'Import dữ liệu thành công'
+) => {
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  const resPromise = page.waitForResponse(url);
+
+  const response = await resPromise;
+  const resJson = await response.json();
+
+  if (resJson.type !== 'SUCCESS') {
+    await screenshot(page, 'project-failed');
+  }
+
+  expect(resJson.type).toBe('SUCCESS');
+
+  const toastDetail = alertSuccess.locator('.p-toast-detail');
+  await expect(toastDetail).toHaveText(successText);
+
+  const hasSuccessText = await toastDetail.textContent();
+  if (hasSuccessText?.includes(successText)) {
+    await screenshot(page, 'project-success');
+  }
+
+  await alertSuccess.locator('.p-toast-icon-close').click();
+};
+
+export const importDocumentByPid = async (page:Page) => {
+  await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
@@ -31,7 +81,7 @@ test('import document by pid', async ({page}) => {
   if (await subDialog.getByRole('row').count() < 3) {
     await subDialog.locator('form span').nth(1).click();
     const selectUserDialog = page.getByRole('dialog').filter({
-      has: page.locator('span.p-dialog-title:text("Tìm kiếm nhân viên")')
+      has: page.locator('span.p-dialog-title:text("Tìm kiếm nhân sự")')
     });
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
     await selectUserDialog.getByRole('row').nth(1).locator('a').click();
@@ -62,28 +112,37 @@ test('import document by pid', async ({page}) => {
 
   if (await subDialog.getByRole('rowgroup').count() < 3) {
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.getByRole('textbox').fill(USERS.NHUNG.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.NHUNG.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
     await subDialog.getByRole('rowgroup').locator('tr').nth(1).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Pháp lý'}).click();
+    await subDialog.getByRole('rowgroup').locator('tr').nth(1).locator('#divisionLabor').fill("Nhận order");
+    await subDialog.getByRole('rowgroup').locator('tr').nth(1).locator('span#positionId').click();
+    await page.getByRole('option', {name: 'Tổ trưởng'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.getByRole('textbox').fill(USERS.HONG.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.HONG.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
     await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Kỹ thuật - công nghệ'}).click();
+    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('#divisionLabor').fill("Làm bánh mỳ");
+    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('span#positionId').click();
+    await page.getByRole('option', {name: 'Thành viên'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.getByRole('textbox').fill(USERS.CAM_NHUNG.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
     await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Kinh tế - tài chính'}).click();
+    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('#divisionLabor').fill("Thu tiền");
+    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#positionId').click();
+    await page.getByRole('option', {name: 'Thành viên'}).click();
   }
 
   await saveForm(page, subDialog);
@@ -123,23 +182,20 @@ test('import document by pid', async ({page}) => {
   await saveForm(page, subDialog);
   await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
-})
+}
 
-test('submit to appraiser', async ({page}) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID');
+export const documentByPidSubmitToAppraiser = async (page:Page) => {
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.locator('.p-checkbox-box').first().click();
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
   await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
-  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submit-to-appraiser`, 'Trình thẩm định thành công');
-})
+  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submitToAppraiser`, 'Trình thẩm định thành công');
+}
 
-test('verify', async ({page}) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
-
-
+export const documentByPidVerify = async(page:Page) => {
+  await loginWithRole(page, USERS.PC, '/CBMS_DOCUMENT_BY_PID_INVEST');
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
@@ -160,7 +216,7 @@ test('verify', async ({page}) => {
     // if(i===1) {
     //   await page.getByRole('option', {name: 'Hủy', exact: true}).click();
     // } else {
-      await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
+    await page.getByRole('option', {name: 'Xác nhận', exact: true}).click();
     // }
     await page.waitForTimeout(100);
     await row.locator('input#note').fill('Chú thích ' + (i + 1))
@@ -175,20 +231,5 @@ test('verify', async ({page}) => {
 
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-})
-
-const saveForm = async (page: Page, dialog: Locator) => {
-  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
-  await page.pause();
-  // await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
-}
-
-const checkSuccess = async (page: Page, url: string = `**${CBMS_MODULE}/document-by-pid/import`, successText: string = 'Import dữ liệu thành công') => {
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-  let resPromise = await page.waitForResponse(url);
-  let resJson = await resPromise.json()
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
 }

@@ -15,8 +15,8 @@ const PROJECT_NAME = `TA autotest dự án`;
 test.describe('test project', () => {
   test('create project full flow', async ({page}) => {
     test.setTimeout(180000);
-    await login(page, '/BIDDING_PROJECT', USERS.NHUNG);
-    await search(page);
+    await login(page, '/BIDDING_PROJECT_NEW', USERS.NHUNG);
+    await searchProject({page});
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới dự án'});
     let tableRow = page.locator('tbody tr');
@@ -30,16 +30,16 @@ test.describe('test project', () => {
     }
     const nameSearch = PROJECT_NAME + ` ${count}`;
     await createProject(page, mainDialog, nameSearch);
-    await submitToAppraisal(page, nameSearch);
-    await appraisal(page, nameSearch);
-    await adjustment(page, nameSearch);
-    await submitToAppraisal(page, nameSearch + ` DC 1`);
-    await appraisal(page, nameSearch + ` DC 1`);
+    await submitToAppraisalProject({page, nameSearch});
+    await appraisalProject({page, nameSearch});
+    await adjustmentProject({page, nameSearch});
+    await submitToAppraisalProject({page, nameSearch:nameSearch + ` DC 1`});
+    await appraisalProject({page, nameSearch:nameSearch + ` DC 1`});
   });
 
   test('project search form', async ({page}) => {
     test.setTimeout(180000);
-    await login(page, '/BIDDING_PROJECT');
+    await login(page, '/BIDDING_PROJECT_NEW');
     let searchValue: string | number | number[] = 'autotest';
     let locator = page.locator('input#keySearch');
 
@@ -182,7 +182,7 @@ test.describe('test project', () => {
   })
 
   test('table pageable - ID từ response không trùng', async ({page}) => {
-    await login(page, '/BIDDING_PROJECT');
+    await login(page, '/BIDDING_PROJECT_NEW');
 
     const pageable = page.locator('span.p-paginator-pages');
     const pageButtons = pageable.locator('button');
@@ -239,7 +239,7 @@ test.describe('test project', () => {
   test('table visible', async ({page}) => {
     const dataByParType: Record<string, IAppParam[]> = APP_PARAMS;
     await setupAppParams(page, dataByParType);
-    await login(page, '/BIDDING_PROJECT');
+    await login(page, '/BIDDING_PROJECT_NEW');
     await saveFileParam(page, dataByParType);
 
     await validateDataTable(page, validateProjectTable, dataByParType);
@@ -247,8 +247,8 @@ test.describe('test project', () => {
 })
 
 test('create project', async ({page}) => {
-  await login(page, '/BIDDING_PROJECT');
-  await search(page);
+  await login(page, '/BIDDING_PROJECT_NEW');
+  await searchProject({page});
   await page.getByRole('button', {name: 'Thêm mới'}).click();
   const mainDialog = page.getByRole('dialog', {name: 'Tạo mới dự án'});
   let tableRow = page.locator('tbody tr');
@@ -266,22 +266,22 @@ test('create project', async ({page}) => {
 });
 
 test('project submit to appraiser', async ({page}) => {
-  await login(page, '/BIDDING_PROJECT', USERS.NHUNG);
-  await search(page);
-  await submitToAppraisal(page);
+  await login(page, '/BIDDING_PROJECT_NEW', USERS.NHUNG);
+  await searchProject({page});
+  await submitToAppraisalProject({page});
 })
 
 test('project appraiser', async ({page}) => {
-  await login(page, '/BIDDING_PROJECT', USERS.PC);
-  await search(page);
-  await appraisal(page);
+  await login(page, '/BIDDING_PROJECT_NEW', USERS.PC);
+  await searchProject({page});
+  await appraisalProject({page});
 })
 
 test('project adjustment', async ({page}) => {
-  await login(page, '/BIDDING_PROJECT', USERS.NHUNG);
-  await search(page);
+  await login(page, '/BIDDING_PROJECT_NEW', USERS.NHUNG);
+  await searchProject({page});
 
-  await adjustment(page);
+  await adjustmentProject({page});
 })
 
 const saveForm = async ({
@@ -310,18 +310,27 @@ interface SaveFormOptions {
   successText?: string;
 }
 
-const search = async (page: Page, name?: string) => {
-  await page.locator(`input[name="keySearch"]`).fill(name ? name : PROJECT_NAME);
+export const searchProject = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
+  await page.locator(`input[name="keySearch"]`).fill(nameSearch ? nameSearch : PROJECT_NAME);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/project/search') && response.status() === 200);
 }
 
-const createProject = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
+export const createProject = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
   if (nameSearch) {
-    await search(page, nameSearch);
+    await searchProject({page, nameSearch});
   }
   await fillText(mainDialog, 'projectName', nameSearch);
-  await selectAutocompleteMulti(page, mainDialog, 'Chủ trương', 'Tìm kiếm chủ trương', getGlobalVariable('lastPolicyName'), 'policy/doSearchDistinct');
+  await selectAutocompleteMulti({
+    page,
+    locator: mainDialog,
+    title: 'Chủ trương',
+    dialogTitle: 'Tìm kiếm chủ trương',
+    value: getGlobalVariable('lastPolicyName'),
+    api: 'policy/doSearchDistinct'
+  });
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'projectDecisionNumber', `QD_PD_DA_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'projectDate');
@@ -334,9 +343,9 @@ const createProject = async (page: Page, mainDialog: Locator, nameSearch?: strin
   await saveForm({page, dialog: mainDialog});
 }
 
-const submitToAppraisal = async (page: Page, nameSearch?: string) => {
+export const submitToAppraisalProject = async ({page, nameSearch}: { page: Page, nameSearch?: string }) => {
   if (nameSearch) {
-    await search(page, nameSearch);
+    await searchProject({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -349,15 +358,17 @@ const submitToAppraisal = async (page: Page, nameSearch?: string) => {
     page,
     dialog: confirmDialog,
     buttonName: 'Có',
-    url: '**/project/submit-to-appraiser',
+    url: '**/project/submitToAppraiser',
     successText: 'Trình thẩm định thành công'
   })
 }
 
-const appraisal = async (page: Page, nameSearch?: string) => {
+export const appraisalProject = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
   if (nameSearch) {
-    await loginWithRole(page, USERS.PC, '/BIDDING_PROJECT')
-    await search(page, nameSearch);
+    await loginWithRole(page, USERS.PC, '/BIDDING_PROJECT_NEW')
+    await searchProject({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -375,8 +386,8 @@ const appraisal = async (page: Page, nameSearch?: string) => {
     })
 
     if (rowCount > 1) {
-      await loginWithRole(page, USERS.NHUNG, '/BIDDING_PROJECT')
-      await search(page);
+      await loginWithRole(page, USERS.NHUNG, '/BIDDING_PROJECT_NEW')
+      await searchProject({page});
       for (let i = 0; i < rowCount; i++) {
         const row = tableRow.nth(i);
         const statusText = await row.locator('td').nth(5).innerText(); // cột "Trạng thái"
@@ -393,10 +404,10 @@ const appraisal = async (page: Page, nameSearch?: string) => {
   }
 }
 
-const adjustment = async (page: Page, nameSearch?: string) => {
+export const adjustmentProject = async ({page,nameSearch}:{page: Page, nameSearch?: string}) => {
   if (nameSearch) {
-    await loginWithRole(page, USERS.NHUNG, '/BIDDING_PROJECT')
-    await search(page, nameSearch);
+    await loginWithRole(page, USERS.NHUNG, '/BIDDING_PROJECT_NEW')
+    await searchProject({page, nameSearch});
   }
 
   let tableRow = page.locator('tbody tr');

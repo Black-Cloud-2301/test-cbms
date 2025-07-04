@@ -1,10 +1,50 @@
 {
   "policyName": "TA autotest chủ trương",
-  "lastPolicyName": "TA autotest chủ trương 9 DC 1",
+  "lastPolicyName": "TA autotest chủ trương 35",
   "projectName": "TA autotest dự án",
-  "lastProjectName": "TA autotest dự án 7 DC 1",
+  "lastProjectName": "TA autotest dự án 18",
   "purchaseName": "TA autotest đề xuất mua sắm",
-  "lastPurchaseName": "TA autotest đề xuất mua sắm 9",
-  "lastSelectionPlanName": "Mua sắm TA autotest kế hoạch lựa chọn nhà thầu 5",
-  "lastContractorName": "TA autotest 25"
+  "lastPurchaseName": "TA autotest đề xuất mua sắm 14",
+  "selectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu",
+  "lastSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 18",
+  "lastContractorName": "TA autotest 158",
+  "listRemainPurchases": [
+    {
+      "name": "TA autotest đề xuất mua sắm 14",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 14",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 14",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 13",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 12",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 11",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 10",
+      "remainPrice": 100000000,
+      "status": "APPRAISED"
+    }
+  ],
+  "lastCostSubmissionName": "TA autotest tờ trình dự toán 2 DC 2",
+  "currentCostSubmissionName": "TA autotest tờ trình dự toán 2 DC 2"
 }

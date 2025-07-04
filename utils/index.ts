@@ -23,7 +23,7 @@ export const screenshot = async (page: Page, module: string) => {
 
 const variablePath = path.resolve('constants', 'variable', 'index.meta.json');
 
-export const setGlobalVariable = (field: string, value: string) => {
+export const setGlobalVariable = (field: string, value: any) => {
   let meta = {};
   try {
     meta = JSON.parse(fs.readFileSync(variablePath, 'utf-8'));
@@ -38,4 +38,29 @@ export const setGlobalVariable = (field: string, value: string) => {
 export const getGlobalVariable = (field: string) => {
   const meta = JSON.parse(fs.readFileSync(variablePath, 'utf-8'));
   return meta[field];
+}
+
+export const buildNextName = (oldName: string): string => {
+  // Có dạng “… DC <số>” ở cuối không?
+  const dcTail = /\sDC\s+(\d+)\s*$/i;   // group[1] = số
+
+  if (dcTail.test(oldName)) {
+    // 🅰️ ĐÃ có “DC n” → tăng n
+    return oldName.replace(dcTail, (_m, n) => ` DC ${Number(n) + 1}`);
+  }
+
+  // 🅱️ CHƯA có “DC” → thêm “ DC 1” phía sau
+  return `${oldName} DC 1`;
+}
+
+export const bumpMainSerial = (name: string): string => {
+  const regex = /(\d+)(?:\s*DC\s*\d+)?\s*$/i;
+
+  if (regex.test(name)) {
+    // Thay toàn bộ "<số> (DC <số_DC>)" ở cuối bằng <số+1>
+    return name.replace(regex, (_m, mainNum) => `${Number(mainNum) + 1}`);
+  }
+
+  // Không tìm thấy số nào ở cuối → thêm " 1"
+  return `${name.trim()} 1`;
 }

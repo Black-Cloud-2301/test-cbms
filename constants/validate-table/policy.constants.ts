@@ -27,6 +27,10 @@ export const validatePolicyTable: IValidateTableColumn[] = [
     optionValue: ['1. Mới tạo', '2. Trình thẩm định', '3. Đã thẩm định', '4. Từ chối thẩm định']
   },
   {
+    title: 'Lý do từ chối',
+    type: 'text',
+  },
+  {
     title: 'Nhóm dự án',
     type: 'text',
     optionValue: 'PROJECT_GROUP'
@@ -84,6 +88,10 @@ export const validateProjectTable: IValidateTableColumn[] = [
     title: 'Trạng thái',
     type: 'text',
     optionValue: ['1. Mới tạo', '2. Trình thẩm định', '3. Đã thẩm định', '4. Từ chối thẩm định']
+  },
+  {
+    title: 'Lý do từ chối',
+    type: 'text',
   },
   {
     title: 'Nhóm dự án',
@@ -188,6 +196,10 @@ export const validateSelectPlanTable: IValidateTableColumn[] = [
     title: 'Trạng thái',
     type: 'text',
     optionValue: ['1. Mới tạo', '2. Trình thẩm định', '3. Đã thẩm định', '4. Từ chối thẩm định']
+  },
+  {
+    title: 'Lý do từ chối',
+    type: 'text',
   },
   {
     title: 'Mã dự án',

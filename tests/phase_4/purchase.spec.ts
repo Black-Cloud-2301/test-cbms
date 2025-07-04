@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
 import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
-import {CBMS_MODULE, URL_BE_BASE} from '../../constants/common';
+import {CBMS_MODULE, ROUTES, URL_BE_BASE} from '../../constants/common';
 import {
   checkSearchResponse,
   validateDataTable,
@@ -13,7 +13,7 @@ import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {IAppParam} from '../../constants/interface';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {validateProjectTable, validatePurchaseTable} from '../../constants/validate-table/policy.constants';
+import {validatePurchaseTable} from '../../constants/validate-table/policy.constants';
 
 const PURCHASE_NAME = `TA autotest đề xuất mua sắm`;
 
@@ -22,8 +22,8 @@ test.describe('test purchase', () => {
   test.setTimeout(180000);
 
   test('create purchase', async ({page}) => {
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
-    await search(page);
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
+    await searchPurchase({page});
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới đề xuất mua sắm'});
     let tableRow = page.locator('tbody tr');
@@ -40,27 +40,50 @@ test.describe('test purchase', () => {
     await createPurchase(page, mainDialog, nameSearch);
   });
 
+  test('update purchase', async ({page}) => {
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
+    const lastPurchaseName = getGlobalVariable('lastPurchaseName');
+    await searchPurchase({page, nameSearch: lastPurchaseName});
+    const mainDialog = page.getByRole('dialog', {name: 'Cập nhật đề xuất mua sắm'});
+    let tableRow = page.locator('tbody tr');
+    let rowCount = await tableRow.count();
+    if (rowCount > 0) {
+      const row = tableRow.first();
+      await row.getByTitle('Sửa').click();
+    }
+    let nameSearch = lastPurchaseName + ' update';
+    await fillText(mainDialog, 'purchaseRequestName', nameSearch);
+    await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
+    await saveForm({
+      page,
+      dialog: mainDialog,
+      url: '**/purchase/update',
+      successText: 'Cập nhật đề xuất mua sắm thành công'
+    });
+    setGlobalVariable('lastPurchaseName', nameSearch);
+  });
+
   test('purchase submit to appraiser', async ({page}) => {
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
     const nameSearch = getGlobalVariable('currentPurchaseName');
     if (!nameSearch) {
-      await search(page);
+      await searchPurchase({page});
     }
-    await submitToAppraisal(page, nameSearch);
+    await submitToAppraisalPurchase({page, nameSearch});
   })
 
   test('purchase adjustment', async ({page}) => {
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
     const nameSearch = getGlobalVariable('currentPurchaseName');
     if (!nameSearch) {
-      await search(page);
+      await searchPurchase({page});
     }
-    await adjustment(page, nameSearch);
+    await adjustmentPurchase({page, nameSearch});
   })
 
   test('purchase search form', async ({page}) => {
     test.setTimeout(180000);
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
     let searchValue: string | number | number[] = 'autotest';
     let locator = page.locator('input#keySearch');
 
@@ -145,7 +168,7 @@ test.describe('test purchase', () => {
   })
 
   test('purchase validate form', async ({page}) => {
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const dialog = page.getByRole('dialog', {name: 'Tạo mới đề xuất mua sắm'});
     let locator = dialog.locator('input#purchaseRequestName');
@@ -164,7 +187,7 @@ test.describe('test purchase', () => {
   })
 
   test('table pageable - ID từ response không trùng', async ({page}) => {
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
 
     const pageable = page.locator('span.p-paginator-pages');
     const pageButtons = pageable.locator('button');
@@ -222,7 +245,7 @@ test.describe('test purchase', () => {
   test('table visible', async ({page}) => {
     const dataByParType: Record<string, IAppParam[]> = APP_PARAMS;
     await setupAppParams(page, dataByParType);
-    await login(page, '/CBMS_PURCHASE_PROPOSAL');
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
     await saveFileParam(page, dataByParType);
 
     await validateDataTable(page, validatePurchaseTable, dataByParType);
@@ -257,8 +280,10 @@ interface SaveFormOptions {
   successText?: string;
 }
 
-const search = async (page: Page, name?: string) => {
-  await page.locator(`input[name="keySearch"]`).fill(name ? name : PURCHASE_NAME);
+export const searchPurchase = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
+  await page.locator(`input[name="keySearch"]`).fill(nameSearch ? nameSearch : PURCHASE_NAME);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse((response) => {
     const urlMatch = response.url().includes(`${CBMS_MODULE}/purchase/doSearch`);
@@ -269,46 +294,61 @@ const search = async (page: Page, name?: string) => {
     const request = response.request();
     const postData = request.postDataJSON();
 
-    return postData?.keySearch === (name ? name : PURCHASE_NAME);
+    return postData?.keySearch === (nameSearch ? nameSearch : PURCHASE_NAME);
   });
 }
 
-const createPurchase = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
+export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
+  const totalPrice = 100000000;
   await fillText(mainDialog, 'purchaseRequestName', nameSearch);
   await fillText(mainDialog, 'procurementProposalContent', 'Mua cả thế giới');
-  await fillNumber(mainDialog, 'propositionPurchasePrice', '100000000');
+  await fillNumber(mainDialog, 'propositionPurchasePrice', totalPrice.toString());
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'procurementProposalDocumentNumber', `SO_VB_DXMS_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'decisionDay');
   await selectOption(page, mainDialog, 'approvalLevel', '1. HĐQT');
-  await selectFile(mainDialog, 'assets/files/sample.pdf');
+  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '01'});
   await saveForm({page, dialog: mainDialog});
+  const listRemainPurchases = getGlobalVariable('listRemainPurchases');
+  setGlobalVariable('listRemainPurchases', [{
+    name: nameSearch,
+    remainPrice: totalPrice,
+    status: 'NEW'
+  }, ...listRemainPurchases]);
 }
 
-const submitToAppraisal = async (page: Page, nameSearch?: string) => {
+export const submitToAppraisalPurchase = async ({page, nameSearch}: {
+  page: Page, nameSearch?: string
+}) => {
   if (nameSearch) {
-    await search(page, nameSearch);
+    await searchPurchase({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
   expect(rowCount > 0)
   const row = tableRow.first();
   await row.locator('p-checkbox').click();
-  await page.getByRole('button', {name: 'Chốt'}).click();
-  const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận chốt đề xuất mua sắm'});
+  await page.getByRole('button', {name: 'Phê duyệt'}).click();
+  const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận phê duyệt đề xuất mua sắm'});
   await saveForm({
     page,
     dialog: confirmDialog,
     buttonName: 'Có',
-    url: '**/purchase/submit-to-appraiser',
-    successText: 'Chốt thẩm định thành công'
-  })
+    url: '**/purchase/submitToAppraiser',
+    successText: 'Phê duyệt thành công'
+  });
+  const listRemainPurchases = getGlobalVariable('listRemainPurchases');
+  const updatedList = listRemainPurchases.map(item =>
+    item.name === nameSearch ? { ...item, status: 'APPRAISED' } : item
+  );
+
+  setGlobalVariable('listRemainPurchases', updatedList);
 }
 
-const adjustment = async (page: Page, nameSearch?: string) => {
+export const adjustmentPurchase = async ({page, nameSearch}: { page: Page, nameSearch?: string }) => {
   if (nameSearch) {
-    await loginWithRole(page, USERS.NHUNG, '/CBMS_PURCHASE_PROPOSAL')
-    await search(page, nameSearch);
+    await loginWithRole(page, USERS.NHUNG, ROUTES.PURCHASE_PROPOSAL)
+    await searchPurchase({page, nameSearch});
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -326,7 +366,7 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   let countStatusNew = 0;
   for (let i = 0; i < rowCount; i++) {
     const row = tableRow.nth(i);
-    const statusText = await row.locator('td').nth(4).innerText(); // cột "Trạng thái"
+    const statusText = await row.locator('td').nth(5).innerText(); // cột "Trạng thái"
     if (statusText.includes('1. Mới tạo')) {
       countStatusNew++;
 
@@ -341,6 +381,9 @@ const adjustment = async (page: Page, nameSearch?: string) => {
   }
 
   // ✅ Chỉ được phép có đúng 1 dòng "Mới tạo"
+  if (countStatusNew !== 1) {
+    await screenshot(page, 'purchase');
+  }
   expect(countStatusNew).toBe(1);
 
 }
