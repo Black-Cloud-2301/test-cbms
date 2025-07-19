@@ -2,7 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
 import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
-import {CBMS_MODULE, ROUTES, URL_BE_BASE} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../constants/common';
 import {
   checkSearchResponse,
   validateDataTable,
@@ -181,7 +181,7 @@ test.describe('test purchase', () => {
     locator = dialog.locator('input#procurementProposalDocumentNumber');
     await validateInputText({locator, maxLength: 100});
     await selectDate(page, dialog, 'decisionDay');
-    await selectOption(page, dialog, 'approvalLevel', '2. TGĐ');
+    await selectOption(page, dialog, 'approvalLevel', 'Ban GĐ TTCN');
     await dialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
     await saveForm({page, dialog});
   })
@@ -306,15 +306,17 @@ export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'procurementProposalDocumentNumber', `SO_VB_DXMS_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'decisionDay');
-  await selectOption(page, mainDialog, 'approvalLevel', '1. HĐQT');
-  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '01'});
+  await selectOption(page, mainDialog, 'approvalLevel', 'Ban TGĐ TCT');
+  await selectFile({page,locator: mainDialog, value: 'assets/files/sample.pdf', fileType: 'Tờ trình/đề xuất được phê duyệt'});
   await saveForm({page, dialog: mainDialog});
-  const listRemainPurchases = getGlobalVariable('listRemainPurchases');
-  setGlobalVariable('listRemainPurchases', [{
+
+  const listPurchase = getGlobalVariable('listPurchase');
+  setGlobalVariable('listPurchase', [...listPurchase, {
     name: nameSearch,
-    remainPrice: totalPrice,
-    status: 'NEW'
-  }, ...listRemainPurchases]);
+    totalPrice,
+    status: CONTRACTOR_STATUS.NEW,
+    costSubmissionName: null
+  }]);
 }
 
 export const submitToAppraisalPurchase = async ({page, nameSearch}: {
@@ -337,12 +339,12 @@ export const submitToAppraisalPurchase = async ({page, nameSearch}: {
     url: '**/purchase/submitToAppraiser',
     successText: 'Phê duyệt thành công'
   });
-  const listRemainPurchases = getGlobalVariable('listRemainPurchases');
-  const updatedList = listRemainPurchases.map(item =>
-    item.name === nameSearch ? { ...item, status: 'APPRAISED' } : item
+  const listPurchase = getGlobalVariable('listPurchase');
+  const updatedList = listPurchase.map(item =>
+    item.name === nameSearch && item.status === CONTRACTOR_STATUS.NEW ? { ...item, status: CONTRACTOR_STATUS.APPRAISED } : item
   );
 
-  setGlobalVariable('listRemainPurchases', updatedList);
+  setGlobalVariable('listPurchase', updatedList);
 }
 
 export const adjustmentPurchase = async ({page, nameSearch}: { page: Page, nameSearch?: string }) => {
@@ -386,4 +388,8 @@ export const adjustmentPurchase = async ({page, nameSearch}: { page: Page, nameS
   }
   expect(countStatusNew).toBe(1);
 
+}
+
+export const getAvailablePurchase = ({status, index = 0, notInCostSubmission = false}:{status: CONTRACTOR_STATUS, index?: number, notInCostSubmission?:boolean}) => {
+  return getGlobalVariable('listPurchase').filter(c=>c.status === status && (notInCostSubmission ? !c.costSubmissionName : true))[index];
 }

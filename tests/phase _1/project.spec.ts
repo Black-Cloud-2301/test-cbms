@@ -319,9 +319,9 @@ export const searchProject = async ({page, nameSearch}: {
 }
 
 export const createProject = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
-  if (nameSearch) {
-    await searchProject({page, nameSearch});
-  }
+  // if (nameSearch) {
+  //   await searchProject({page, nameSearch});
+  // }
   await fillText(mainDialog, 'projectName', nameSearch);
   await selectAutocompleteMulti({
     page,
@@ -336,9 +336,10 @@ export const createProject = async (page: Page, mainDialog: Locator, nameSearch?
   await selectDate(page, mainDialog, 'projectDate');
   await selectOption(page, mainDialog, 'projectApprovedBy', '1. HĐQT');
   await selectFile({
+    page,
     locator: mainDialog,
     value: 'assets/files/sample-2.pdf',
-    fileType: '07',
+  fileType: 'Quyết định phê duyệt dự án',
   });
   await saveForm({page, dialog: mainDialog});
 }

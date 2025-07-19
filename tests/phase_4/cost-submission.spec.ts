@@ -1,6 +1,6 @@
 import {expect, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {CBMS_MODULE, ROUTES, URL_BE_BASE} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../constants/common';
 import {buildNextName, bumpMainSerial, getGlobalVariable, setGlobalVariable} from '../../utils';
 import {fillNumber, fillText, selectAutocompleteMulti} from '../../utils/fill.utils';
 import {USERS} from '../../constants/user';
@@ -10,16 +10,15 @@ import {testPageable} from '../../component';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {validateProjectTable} from '../../constants/validate-table/policy.constants';
+import {getAvailablePurchase} from './purchase.spec';
 
 const COST_SUBMISSION_NAME = `TA autotest tờ trình dự toán`;
 
 test('create cost submission', async ({page}) => {
   await createCostSubmission({page});
   await submitToAppraisalCostSubmission({page});
-  await appraisalCostSubmission({page});
   await adjustmentCostSubmission({page});
   await submitToAppraisalCostSubmission({page});
-  await appraisalCostSubmission({page});
 
   await checkTableVisible({page});
 })
@@ -72,20 +71,23 @@ export const createCostSubmission = async ({page}: {
   setGlobalVariable('currentCostSubmissionName', nameSearch);
   await page.getByRole('button', {name: 'Thêm mới'}).click();
   await fillText(mainDialog, 'costSubmissionName', nameSearch);
+  await fillText(mainDialog, 'costSubmissionNumber', 'SO_TTDT_001');
   await mainDialog.locator('input[formcontrolname="purchaseRequestCode"]').click({force: true});
   const selectPurchaseDialog = page.getByRole('dialog', {name: 'Chọn đề xuất mua sắm'});
+  const purchaseName = getAvailablePurchase({status: CONTRACTOR_STATUS.APPRAISED, notInCostSubmission: true}).name;
   await selectAutocompleteMulti({
     page,
     locator: selectPurchaseDialog,
     title: 'Chọn đề xuất mua sắm',
     dialogTitle: 'Tìm kiếm mã đề xuất mua sắm',
-    value: getGlobalVariable('lastPurchaseName'),
+    value: purchaseName,
     api: 'purchase/searchPurchase',
     multiple: true
   });
   await selectPurchaseDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await fillText(mainDialog, 'costSubmissionContent', 'Mua nguyên liệu bán bánh mỳ');
-  await fillNumber(mainDialog, 'costSubmissionPrice', '69850000');
+  const costSubmissionPrice = 69850000;
+  await fillNumber(mainDialog, 'costSubmissionPrice', costSubmissionPrice.toString());
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
   await page.getByRole('button', {name: 'Tải lên'}).click();
@@ -106,6 +108,16 @@ export const createCostSubmission = async ({page}: {
   await page.waitForResponse(response => response.url().includes(`/sysUser/search`) && response.status() === 200);
   await selectEmployeeDialog.getByRole('row').nth(1).locator('a').click();
   await saveForm({page, dialog: mainDialog});
+  const listCostSubmission = getGlobalVariable('listCostSubmission');
+  setGlobalVariable('listCostSubmission', [...listCostSubmission, {name: nameSearch, status: CONTRACTOR_STATUS.NEW, totalValue: costSubmissionPrice}])
+  const listPurchase = getGlobalVariable('listPurchase');
+  const updatedPurchaseList = listPurchase.map(p=>{
+    if(p.status === CONTRACTOR_STATUS.APPRAISED && p.name === purchaseName){
+      return {...p, costSubmissionName: nameSearch}
+    }
+    return p;
+  })
+  setGlobalVariable('listPurchase', updatedPurchaseList);
 }
 
 export const submitToAppraisalCostSubmission = async ({page}: { page: Page }) => {
@@ -116,20 +128,29 @@ export const submitToAppraisalCostSubmission = async ({page}: { page: Page }) =>
   expect(rowCount > 0)
   const row = tableRow.first();
   await row.locator('p-checkbox').click();
-  await page.getByRole('button', {name: 'Trình thẩm định'}).click();
+  await page.getByRole('button', {name: 'Phê duyệt'}).click();
   const confirmDialog = page.getByRole('dialog').filter({
-    has: page.locator('span:text("Xác nhận trình thẩm định")')
+    has: page.locator('span:text("Xác nhận phê duyệt")')
   });
   await saveForm({
     page,
     dialog: confirmDialog,
     buttonName: 'Có',
     url: '**/cost-submission/submitToAppraiser',
-    successText: 'Trình thẩm định thành công'
+    successText: 'Thẩm định thành công'
   })
+
+  const listCostSubmission = getGlobalVariable('listCostSubmission');
+  const updatedCostSubmission = listCostSubmission.map(c=>{
+    if(c.status === CONTRACTOR_STATUS.NEW && c.name === nameSearch) {
+      return {...c, status: CONTRACTOR_STATUS.APPRAISED}
+    }
+    return c;
+  })
+  setGlobalVariable('listCostSubmission', updatedCostSubmission);
 }
 
-export const appraisalCostSubmission = async ({page}: {
+/*export const appraisalCostSubmission = async ({page}: {
   page: Page
 }) => {
   await loginWithRole(page, USERS.PC, ROUTES.COST_SUBMISSION)
@@ -147,17 +168,17 @@ export const appraisalCostSubmission = async ({page}: {
     page,
     dialog: confirmDialog,
     buttonName: 'Có',
-    url: '**/cost-submission/appraisal',
+    url: '**!/cost-submission/appraisal',
     successText: 'Thẩm định thành công'
   })
   if (nameSearch) {
     setGlobalVariable('lastCostSubmissionName', nameSearch);
   }
-}
+}*/
 
 export const adjustmentCostSubmission = async ({page}: { page: Page }) => {
   await loginWithRole(page, USERS.NHUNG, ROUTES.COST_SUBMISSION);
-  const nameSearch = getGlobalVariable('currentCostSubmissionName');
+  const nameSearch = getAvailableCostSubmission({status: CONTRACTOR_STATUS.APPRAISED}).name;
   await searchCostSubmission({page, nameSearch});
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
@@ -170,6 +191,20 @@ export const adjustmentCostSubmission = async ({page}: { page: Page }) => {
   await fillText(mainDialog, 'costSubmissionName', newName);
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await saveForm({page, dialog: mainDialog, successText: 'Điều chỉnh bản ghi thành công'});
+  const listCostSubmission = getGlobalVariable('listCostSubmission');
+  const updatedListCostSubmission = listCostSubmission.flatMap(c => {
+    const isAppraised = c.status === CONTRACTOR_STATUS.APPRAISED;
+
+    if (isAppraised && c.name === c.name) {
+      return [
+        { ...c, status: CONTRACTOR_STATUS.ADJUSTMENT },
+        { ...c, name: newName }
+      ];
+    }
+
+    return c;
+  });
+  setGlobalVariable('listCostSubmission', updatedListCostSubmission);
 }
 
 export const checkSearchCostSubmission = async ({page}: { page: Page }) => {
@@ -273,3 +308,7 @@ const saveForm = async ({
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
 };
+
+export const getAvailableCostSubmission = ({status, index = 0}:{status: CONTRACTOR_STATUS, index?: number}) => {
+  return getGlobalVariable('listCostSubmission').filter(c=>c.status === status)[index];
+}

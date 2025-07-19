@@ -1,47 +1,62 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
-
-const contractorName = CONTRACTOR_NAME_SEARCH;
+import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH, CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
+import {getGlobalVariable, setGlobalVariable} from '../../utils';
+import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
+import {getAvailableContractorPurchase} from './selection_plan.spec';
 
 test.describe('test document-by-pid ver .11', () => {
   test.describe.configure({mode: 'serial'});
   test.setTimeout(180000);
   test('import document by pid 3.1.11', async ({page}) => {
     test.setTimeout(120000);
-    await loginAndSearch(page);
+    await loginAndSearch({page});
 
     await updateDocumentByPid(page);
   })
 
   test('submit to appraisal', async ({page}) => {
-    await submitToAppraisalDocumentByPid(page);
+    await submitToAppraisalDocumentByPid({page});
   })
 
   test('appraisal', async ({page}) => {
-    await appraisalDocumentByPid(page);
+    await appraisalDocumentByPid({page});
   });
 })
 
-export const saveFormPurchase = async (page: Page, dialog: Locator, url: string = '**/document-by-pid/save', successText: string = 'Cập nhật bản ghi thành công') => {
-  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
-  await checkSuccess({page, url, successText});
+export const saveFormPurchase = async (page: Page, dialog: Locator, url: string = '/document-by-pid/save', successText: string = 'Cập nhật bản ghi thành công') => {
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  const [res] = await Promise.all([
+    page.waitForResponse(res =>
+      res.url().includes(url) && res.status() === 200
+    ),
+    dialog.getByRole('button', {name: 'Ghi lại'}).click()
+  ]);
+  const resJson = await res.json();
+  expect(resJson.type).toEqual('SUCCESS');
+
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
+  await alertSuccess.locator('.p-toast-icon-close').click();
 }
 
-export const loginAndSearch = async (page: Page) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.MANH);
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+export const loginAndSearch = async ({page, url = ROUTES.DOCUMENT_BY_PID}: { page: Page, url?: string }) => {
+  await login(page, url, USERS.MANH);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorPurchase({status: CONTRACTOR_STATUS.APPRAISED}).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
 }
 
-export const checkSuccess = async ({page, url = '**/document-by-pid/import', successText = 'Import dữ liệu thành công'}:{
-                                     page: Page,
-                                     url?: string,
-                                     successText?: string
-                                   }) => {
+export const checkSuccess = async ({
+                                     page,
+                                     url = '**/document-by-pid/import',
+                                     successText = 'Import dữ liệu thành công'
+                                   }: {
+  page: Page,
+  url?: string,
+  successText?: string
+}) => {
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
   let resPromise = await page.waitForResponse(url);
   let resJson = await resPromise.json()
@@ -50,7 +65,7 @@ export const checkSuccess = async ({page, url = '**/document-by-pid/import', suc
   await alertSuccess.locator('.p-toast-icon-close').click();
 }
 
-export const updateDocumentByPid = async (page:Page) => {
+export const updateDocumentByPid = async (page: Page) => {
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
   //upload file mailing
@@ -59,10 +74,10 @@ export const updateDocumentByPid = async (page:Page) => {
   await checkSuccess({page});
 
   // update dialog 1
-  await page.getByRole('row', {name: 'Tờ trình đề xuất mua sắm'}).getByTitle('Cập nhật văn bản').click();
   let subDialog = page.getByRole('dialog').filter({
     has: page.locator('span.p-dialog-title:text("Cập nhật tờ trình đề xuất mua sắm")')
   });
+  /*await page.getByRole('row', {name: 'Tờ trình đề xuất mua sắm'}).getByTitle('Cập nhật văn bản').click();
 
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
 
@@ -80,9 +95,9 @@ export const updateDocumentByPid = async (page:Page) => {
     }
   }
 
-  table = subDialog.locator('app-form-table').nth(1);
-  tableRow = table.locator('tbody tr');
-  countBidder = await tableRow.count();
+  let table = subDialog.locator('app-form-table').nth(1);
+  let tableRow = table.locator('tbody tr');
+  let countBidder = await tableRow.count();
   if (countBidder < 3) {
     await subDialog.locator('form span').nth(1).click();
     const selectUserDialog = page.getByRole('dialog').filter({
@@ -96,7 +111,7 @@ export const updateDocumentByPid = async (page:Page) => {
   }
 
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-
+*/
   // update dialog 2
   await mainDialog.getByRole('row', {name: 'Tờ trình xin phê duyệt KHLCNT'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt KHLCNT'});
@@ -108,9 +123,9 @@ export const updateDocumentByPid = async (page:Page) => {
   subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo thẩm định KHLCNT'});
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
 
-  table = subDialog.locator('app-form-table').first();
-  tableRow = table.locator('tbody tr');
-  countBidder = await tableRow.count();
+  let table = subDialog.locator('app-form-table').first();
+  let tableRow = table.locator('tbody tr');
+  let countBidder = await tableRow.count();
   if (countBidder < 3) {
     await subDialog.locator('form span').nth(1).click();
     const selectUserDialog = page.getByRole('dialog').filter({
@@ -209,24 +224,32 @@ export const updateDocumentByPid = async (page:Page) => {
   await saveFormPurchase(page, mainDialog);
 }
 
-export const submitToAppraisalDocumentByPid = async (page:Page) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+export const submitToAppraisalDocumentByPid = async ({page, url = ROUTES.DOCUMENT_BY_PID}: {
+  page: Page,
+  url?: string
+}) => {
+  await login(page, url);
+  const currentContractor = getAvailableContractorPurchase({status:CONTRACTOR_STATUS.APPRAISED}).name;
+  await page.locator(`input[name="keySearch"]`).fill(currentContractor);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
 
   await page.locator('.p-checkbox-box').first().click();
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
-  await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
-  await checkSuccess({page, url:`**${CBMS_MODULE}/document-by-pid/submitToAppraiser`, successText:'Trình thẩm định thành công'
-});
+  await page.getByRole('alertdialog', {name: 'Xác nhận trình thẩm định'}).getByRole('button', {name: 'Có'}).click();
+  await checkSuccess({
+    page, url: `**/document-by-pid/submitToAppraiser`, successText: 'Trình thẩm định thành công'
+  });
 }
 
-export const appraisalDocumentByPid = async (page:Page) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
+export const appraisalDocumentByPid = async ({page, url = '/CBMS_DOCUMENT_BY_PID'}: {
+  page: Page,
+  url?: string
+}) => {
+  await login(page, url, USERS.PC);
 
-
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  const currentContractorName = getAvailableContractorPurchase({status:CONTRACTOR_STATUS.APPRAISED}).name;
+  await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
@@ -251,14 +274,24 @@ export const appraisalDocumentByPid = async (page:Page) => {
     await row.locator('input#note').fill('Chú thích ' + (i + 1))
   }
 
-  await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
-
-  let resPromise = await page.waitForResponse('**/document-by-pid/confirm');
-  let resJson = await resPromise.json();
-
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-
+  const [res] = await Promise.all([
+    page.waitForResponse(res =>
+      res.url().includes('/document-by-pid/confirm') && res.status() === 200
+    ),
+    mainDialog.getByRole('button', {name: 'Xác nhận'}).click()
+  ]);
+  const resJson = await res.json();
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
+
+  const listContractor = getGlobalVariable('listContractorPurchase');
+  const updatedList = listContractor.map(c => {
+    if (c.status === CONTRACTOR_STATUS.APPRAISED && c.contractorSelectionPlanName === currentContractorName) {
+      return {...c, status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1};
+    }
+    return c;
+  });
+  setGlobalVariable('listContractorPurchase', updatedList);
 }

@@ -369,8 +369,8 @@ export const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: 
   await fillTextV2(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);
   await selectDateV2(page, mainDialog, 'Ngày chủ trương');
   await selectOptionV2(page, mainDialog, 'Cấp quyết định phê duyệt chủ trương', '1. HĐQT');
-  await selectFile({locator: mainDialog, value: 'assets/files/sample.pdf', fileType: '02'});
-  await selectFile({locator: mainDialog, value: 'assets/files/sample-1.pdf', fileType: '01'});
+  await selectFile({page, locator: mainDialog, value: 'assets/files/sample.pdf', fileType: 'Báo cáo đề xuất chủ trương đầu tư dự án'});
+  await selectFile({page, locator: mainDialog, value: 'assets/files/sample-1.pdf', fileType: 'Quyết định về việc phê duyệt'});
   await saveForm({page, dialog: mainDialog});
 }
 
@@ -382,8 +382,9 @@ export const submitToAppraisalPolicy = async ({page, nameSearch}: {
   }
   let tableRow = page.locator('tbody tr');
   let rowCount = await tableRow.count();
-  expect(rowCount > 0)
+  expect(rowCount > 0);
   const row = tableRow.first();
+  await expect(row.locator('td').first()).not.toHaveText('Không có dữ liệu');
   await row.locator('p-checkbox').click();
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
   const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận trình thẩm định chủ trương'});

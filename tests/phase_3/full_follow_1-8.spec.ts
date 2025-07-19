@@ -1,10 +1,10 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS} from '../../constants/common';
+import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
+import {getGlobalVariable, setGlobalVariable} from '../../utils';
 
-// const contractorName = getGlobalVariable('lastContractorName');
-const contractorName = CONTRACTOR_NAME_SEARCH;
 
 test.describe('test document-by-pid ver 2', () => {
   test.describe.configure({mode: 'serial'});
@@ -194,7 +194,7 @@ const saveForm = async ({
 
 const loginAndSearch = async (page: Page) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.EVALUATED).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -346,7 +346,7 @@ export const importDocumentByPid2 = async (page: Page) => {
 }
 
 export const submitToAppraiser = async (page:Page) => {
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.EVALUATED).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
 
@@ -361,8 +361,9 @@ export const submitToAppraiser = async (page:Page) => {
 }
 
 export const verifyDocumentByPid2 = async (page:Page) => {
+  const currentContractorName = getAvailableContractorInvest(CONTRACTOR_STATUS.EVALUATED).name;
   await loginWithRole(page, USERS.PC, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+  await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -413,4 +414,13 @@ export const verifyDocumentByPid2 = async (page:Page) => {
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
+
+  const listContractor = getGlobalVariable('listContractorInvest');
+  const updatedList = listContractor.map(c=> {
+    if(c.status === CONTRACTOR_STATUS.EVALUATED && c.name === currentContractorName) {
+      return {...c, status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V2}
+    }
+    return c;
+  });
+  setGlobalVariable('listContractorInvest', updatedList);
 }

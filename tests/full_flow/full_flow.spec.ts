@@ -1,10 +1,11 @@
 import {expect, test} from '@playwright/test';
 import {login} from '../login';
-import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
+import {bumpMainSerial, getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {selectDate, selectOption} from '../../utils/fill.utils';
 import {IAppParam} from '../../constants/interface';
 import {
-  checkSearchResponse, checkSearchResponseV2,
+  checkSearchResponse,
+  checkSearchResponseV2,
   validateDataTable,
   validateInputNumber,
   validateInputText
@@ -31,15 +32,19 @@ import {
   submitToAppraisalDocumentByPid,
   updateDocumentByPid
 } from '../phase_4/full_follow_1.11.spec';
-import {reEvaluate, evaluate} from '../phase_3/full_follow_1-7.spec';
+import {evaluate} from '../phase_3/full_follow_1-7.spec';
 import {
-  appraisalBidEvaluationShopping,
-  bidEvaluationDocumentShoppping,
-  proposeBidEvaluationShopping,
+  appraisalDocumentByPidShopping,
+  createDocumentByBidShopping,
   submitToAppraisalShopping
 } from '../phase_4/full_follow_1.13.spec';
 import {documentByPidSubmitToAppraiser, documentByPidVerify, importDocumentByPid} from '../phase_2/full_follow.spec';
 import {importDocumentByPid2, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
+import {
+  adjustmentCostSubmission, checkTablePageable, checkTableVisible,
+  createCostSubmission,
+  submitToAppraisalCostSubmission
+} from '../phase_4/cost-submission.spec';
 
 test.describe('test all invest', () => {
   test.describe.configure({mode: 'serial'});
@@ -49,18 +54,20 @@ test.describe('test all invest', () => {
     test.setTimeout(180000);
     await login(page, '/BIDDING_POLICY_NEW');
     await searchPolicy({page});
-    await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới chủ trương'});
     let tableRow = page.locator('tbody tr');
-    let rowCount = await tableRow.count();
-    let count = 1;
-    if (rowCount > 0) {
-      const row = tableRow.first();
+
+    let nameSearch: string;
+
+    const row = tableRow.first();
+    const content = await row.locator('td').first().innerText();
+    if (content.includes('Không có dữ liệu')) {
+      nameSearch = getGlobalVariable('policyName') + ` 1`
+    } else {
       const oldName = await row.locator('td').nth(4).innerText();
-      const match = oldName.match(/chủ trương (\d+)/i);
-      count = match ? parseInt(match[1]) + 1 : 1;
+      nameSearch = bumpMainSerial(oldName);
     }
-    const nameSearch = getGlobalVariable('policyName') + ` ${count}`
+    await page.getByRole('button', {name: 'Thêm mới'}).click();
     await createPolicy(page, mainDialog, nameSearch);
     await submitToAppraisalPolicy({page, nameSearch});
     await appraisalPolicy({page, nameSearch});
@@ -70,6 +77,164 @@ test.describe('test all invest', () => {
     // await adjustmentPolicy({page, nameSearch: nameSearch + ` DC 1`});
   });
 
+  test('create project full flow', async ({page}) => {
+    test.setTimeout(180000);
+    await login(page, '/BIDDING_PROJECT_NEW');
+    await searchProject({page});
+    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới dự án'});
+    let tableRow = page.locator('tbody tr');
+    let nameSearch: string;
+    const row = tableRow.first();
+    const content = await row.locator('td').first().innerText();
+
+    if (content.includes('Không có dữ liệu')) {
+      nameSearch = getGlobalVariable('projectName') + ` 1`
+    } else {
+      const oldName = await row.locator('td').nth(4).innerText();
+      nameSearch = bumpMainSerial(oldName);
+    }
+
+    await page.getByRole('button', {name: 'Thêm mới'}).click();
+    await createProject(page, mainDialog, nameSearch);
+    await submitToAppraisalProject({page, nameSearch});
+    await appraisalProject({page, nameSearch});
+    // await adjustmentProject({page, nameSearch});
+    // await submitToAppraisalProject({page, nameSearch: nameSearch + ` DC 1`});
+    // await appraisalProject({page, nameSearch: nameSearch + ` DC 1`});
+  });
+
+  test('create selection_plan/ new package/ investment project', async ({page}) => {
+    const totalValue = 10000000;
+    const packageCount = 3;
+    const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
+    await submitToAppraiserSelectionPlan({page, nameSearch});
+    await appraisalSelectionPlan({page, nameSearch});
+  });
+
+  test('create selection_plan/ adjustment / investment project', async ({page}) => {
+    const totalValue = 10000000;
+    const packageCount = 1;
+    const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
+    await submitToAppraiserSelectionPlan({page, nameSearch});
+    await appraisalSelectionPlan({page, nameSearch});
+  });
+
+  test('import document by pid', async ({page}) => {
+    await importDocumentByPid(page);
+    await documentByPidSubmitToAppraiser(page);
+    await documentByPidVerify(page);
+  });
+
+  test('bid evaluate', async ({page}) => {
+    await evaluate({page});
+  })
+
+  test('import document by pid invest 2', async ({page}) => {
+    await importDocumentByPid2(page);
+    await page.pause();
+    await submitToAppraiser(page);
+    await verifyDocumentByPid2(page);
+  })
+});
+
+test.describe('test all shopping', () => {
+  test.describe.configure({mode: 'serial'});
+  test.setTimeout(900000);
+
+  test('create purchase', async ({page}) => {
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
+    await searchPurchase({page});
+    await page.getByRole('button', {name: 'Thêm mới'}).click();
+    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới đề xuất mua sắm'});
+    let tableRow = page.locator('tbody tr');
+    let rowCount = await tableRow.count();
+    let count = 1;
+    if (rowCount > 0) {
+      const row = tableRow.first();
+      const oldName = await row.locator('td').nth(4).innerText();
+      const match = oldName.match(/đề xuất mua sắm (\d+)/i);
+      count = match ? parseInt(match[1]) + 1 : 1;
+    }
+    let nameSearch = getGlobalVariable('purchaseName') + ` ${count}`;
+    setGlobalVariable('lastPurchaseName', nameSearch);
+    await createPurchase(page, mainDialog, nameSearch);
+  });
+
+  test('purchase appraiser', async ({page}) => {
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
+    const nameSearch = getGlobalVariable('listPurchase').find(f => f.status === 'NEW')?.name;
+    await submitToAppraisalPurchase({page, nameSearch});
+  })
+
+  /*test('purchase adjustment', async ({page}) => {
+    await login(page, ROUTES.PURCHASE_PROPOSAL);
+    const nameSearch = getGlobalVariable('lastPurchaseName');
+    if (!nameSearch) {
+      await searchPurchase({page});
+    }
+    // await page.pause();
+    await adjustmentPurchase({page, nameSearch});
+  })*/
+
+  test('create cost submission', async ({page}) => {
+    await createCostSubmission({page});
+    await submitToAppraisalCostSubmission({page});
+    await adjustmentCostSubmission({page});
+    await submitToAppraisalCostSubmission({page});
+  })
+
+  test('create selection_plan/ new package/ shopping full', async ({page}) => {
+    test.setTimeout(180000)
+    await login(page, ROUTES.KHLCNT_PURCHASE);
+    await searchSelectionPlan({page});
+    await page.getByRole('button', {name: 'Thêm mới'}).click();
+    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
+    let tableRow = page.locator('tbody tr');
+    let rowCount = await tableRow.count();
+    let count = 1;
+    if (rowCount > 0) {
+      const row = tableRow.first();
+      const oldName = await row.locator('td').nth(4).innerText();
+      const match = oldName.match(new RegExp(`${getGlobalVariable('selectionPlanName')} (\\d+)`, 'i'));
+      count = match ? parseInt(match[1]) + 1 : 1;
+    }
+    const nameSearch = getGlobalVariable('selectionPlanName') + ` ${count}` + ' mua sắm';
+
+    await createSelectionPlanNewPackageShopping(page, mainDialog, nameSearch);
+    await appraiserSelectionPlanShopping({page, nameSearch});
+  });
+
+  test('create document by pid 3.1.11', async ({page}) => {
+    test.setTimeout(120000);
+    await loginAndSearch({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+
+    await updateDocumentByPid(page);
+    await submitToAppraisalDocumentByPid({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+  });
+
+  test('appraisal document by pid', async ({page}) => {
+    await appraisalDocumentByPid({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+  });
+
+  test('evaluate', async ({page}) => {
+    test.setTimeout(180000);
+    await evaluate({page, url: ROUTES.BID_EVALUATION_PURCHASE, invest: false});
+  });
+
+  test('import document by pid shopping', async ({page}) => {
+    await createDocumentByBidShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+  })
+
+  test('submit to appraisal document by pid shopping', async ({page}) => {
+    await submitToAppraisalShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+  })
+
+  test('appraisal document by pid shopping', async ({page}) => {
+    await appraisalDocumentByPidShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+  })
+})
+
+test.describe('test visible', () => {
   test('policy search form', async ({page}) => {
     test.setTimeout(120000);
     await login(page, '/BIDDING_POLICY_NEW');
@@ -145,7 +310,7 @@ test.describe('test all invest', () => {
       searchObject: {investmentFieldIdList: null},
       conditions: [{fields: ['investmentFieldId']}]
     });
-    await locator.locator("multi-select").filter({hasText: 'Loại dự án'}).locator('p-multiselect').locator('timesicon').locator('svg').click();
+    await locator.locator('multi-select').filter({hasText: 'Loại dự án'}).locator('p-multiselect').locator('timesicon').locator('svg').click();
 
     locator = page.locator('form#collapseFilter');
     await checkSearchResponse({
@@ -190,7 +355,7 @@ test.describe('test all invest', () => {
       url: URL_BE_BASE + '/policy/doSearch',
       searchObject: {createdAtFrom: searchValue},
       type: 'DATE',
-      validateInput: {locator, searchValue, name: "Ngày tạo từ ngày"},
+      validateInput: {locator, searchValue, name: 'Ngày tạo từ ngày'},
       conditions: [{fields: ['createdAt'], value: searchValue, match: 'MORE_THAN_EQUAL'}]
     });
 
@@ -202,7 +367,7 @@ test.describe('test all invest', () => {
       url: URL_BE_BASE + '/policy/doSearch',
       searchObject: {createdAtTo: searchValue},
       type: 'DATE',
-      validateInput: {locator, searchValue, name: "Đến ngày"},
+      validateInput: {locator, searchValue, name: 'Đến ngày'},
       conditions: [{fields: ['createdAt'], value: searchValue, match: 'LESS_THAN_EQUAL'}]
     });
   })
@@ -273,28 +438,68 @@ test.describe('test all invest', () => {
     await validateDataTable(page, validatePolicyTable, dataByParType);
   });
 
-  test('create project full flow', async ({page}) => {
-    test.setTimeout(180000);
+  test('project table pageable', async ({page}) => {
     await login(page, '/BIDDING_PROJECT_NEW');
-    await searchProject({page});
-    await page.getByRole('button', {name: 'Thêm mới'}).click();
-    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới dự án'});
-    let tableRow = page.locator('tbody tr');
-    let rowCount = await tableRow.count();
-    let count = 1;
-    if (rowCount > 0) {
-      const row = tableRow.first();
-      const oldName = await row.locator('td').nth(4).innerText();
-      const match = oldName.match(/dự án (\d+)/i);
-      count = match ? parseInt(match[1]) + 1 : 1;
+
+    const pageable = page.locator('span.p-paginator-pages');
+    const pageButtons = pageable.locator('button');
+    const seenIds = new Set<string>();
+
+    const pageCount = await pageButtons.count();
+
+    for (let i = 0; i < pageCount; i++) {
+      const [res] = await Promise.all([
+        page.waitForResponse(res =>
+          res.url().includes('/project/search') && res.status() === 200
+        ),
+        pageButtons.nth(i).click()
+      ]);
+
+      const responseData = await res.json();
+      const items = responseData.data?.content ?? responseData.data.content ?? responseData.data ?? [];
+
+      for (const item of items) {
+        const id = String(item.projectId); // đảm bảo là string để Set hoạt động ổn định
+        const isDuplicate = seenIds.has(id);
+
+        // ✅ Expect: không được trùng
+        if (isDuplicate) {
+          console.log(`🔴 Trùng ID '${id}' tại trang ${i + 1}`);
+          await screenshot(page, 'project')
+          expect(isDuplicate).toBeFalsy();
+        }
+
+        seenIds.add(id);
+      }
     }
-    const nameSearch = getGlobalVariable('projectName') + ` ${count}`;
-    await createProject(page, mainDialog, nameSearch);
-    await submitToAppraisalProject({page, nameSearch});
-    await appraisalProject({page, nameSearch});
-    // await adjustmentProject({page, nameSearch});
-    // await submitToAppraisalProject({page, nameSearch: nameSearch + ` DC 1`});
-    // await appraisalProject({page, nameSearch: nameSearch + ` DC 1`});
+
+    await page.getByRole('combobox', {name: 'Rows per page'}).click();
+    await page.getByRole('option', {name: '100'}).click();
+    const res = await page.waitForResponse(res =>
+      res.url().includes('/project/search') && res.status() === 200
+    )
+    const responseData = await res.json();
+    expect(responseData.type).toEqual('SUCCESS');
+    const totalElements = await responseData.data?.totalElements;
+    expect(totalElements).toEqual(responseData.data?.totalElements);
+
+    let tableRow = page.locator('tbody tr');
+    let countBidder = await tableRow.count();
+
+    if (totalElements > 100) {
+      expect(countBidder).toEqual(100);
+    } else {
+      expect(countBidder).toEqual(totalElements);
+    }
+  });
+
+  test('project table visible', async ({page}) => {
+    const dataByParType: Record<string, IAppParam[]> = APP_PARAMS;
+    await setupAppParams(page, dataByParType);
+    await login(page, '/BIDDING_PROJECT_NEW');
+    await saveFileParam(page, dataByParType);
+
+    await validateDataTable(page, validateProjectTable, dataByParType);
   });
 
   test('project search form', async ({page}) => {
@@ -441,143 +646,6 @@ test.describe('test all invest', () => {
     });
   })
 
-  test('project table pageable', async ({page}) => {
-    await login(page, '/BIDDING_PROJECT_NEW');
-
-    const pageable = page.locator('span.p-paginator-pages');
-    const pageButtons = pageable.locator('button');
-    const seenIds = new Set<string>();
-
-    const pageCount = await pageButtons.count();
-
-    for (let i = 0; i < pageCount; i++) {
-      const [res] = await Promise.all([
-        page.waitForResponse(res =>
-          res.url().includes('/project/search') && res.status() === 200
-        ),
-        pageButtons.nth(i).click()
-      ]);
-
-      const responseData = await res.json();
-      const items = responseData.data?.content ?? responseData.data.content ?? responseData.data ?? [];
-
-      for (const item of items) {
-        const id = String(item.projectId); // đảm bảo là string để Set hoạt động ổn định
-        const isDuplicate = seenIds.has(id);
-
-        // ✅ Expect: không được trùng
-        if (isDuplicate) {
-          console.log(`🔴 Trùng ID '${id}' tại trang ${i + 1}`);
-          await screenshot(page, 'project')
-          expect(isDuplicate).toBeFalsy();
-        }
-
-        seenIds.add(id);
-      }
-    }
-
-    await page.getByRole('combobox', {name: 'Rows per page'}).click();
-    await page.getByRole('option', {name: '100'}).click();
-    const res = await page.waitForResponse(res =>
-      res.url().includes('/project/search') && res.status() === 200
-    )
-    const responseData = await res.json();
-    expect(responseData.type).toEqual('SUCCESS');
-    const totalElements = await responseData.data?.totalElements;
-    expect(totalElements).toEqual(responseData.data?.totalElements);
-
-    let tableRow = page.locator('tbody tr');
-    let countBidder = await tableRow.count();
-
-    if (totalElements > 100) {
-      expect(countBidder).toEqual(100);
-    } else {
-      expect(countBidder).toEqual(totalElements);
-    }
-  });
-
-  test('project table visible', async ({page}) => {
-    const dataByParType: Record<string, IAppParam[]> = APP_PARAMS;
-    await setupAppParams(page, dataByParType);
-    await login(page, '/BIDDING_PROJECT_NEW');
-    await saveFileParam(page, dataByParType);
-
-    await validateDataTable(page, validateProjectTable, dataByParType);
-  });
-
-  test('create selection_plan/ new package/ investment project', async ({page}) => {
-    const totalValue = 10000000;
-    const packageCount = 3;
-    const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
-    await submitToAppraiserSelectionPlan({page, nameSearch});
-    await appraisalSelectionPlan({page, nameSearch});
-  });
-
-  test('create selection_plan/ adjustment / investment project', async ({page}) => {
-    const totalValue = 10000000;
-    const packageCount = 1;
-    const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
-    await submitToAppraiserSelectionPlan({page, nameSearch});
-    await appraisalSelectionPlan({page, nameSearch});
-  });
-
-  test('import document by pid', async ({page}) => {
-    await importDocumentByPid(page);
-    await documentByPidSubmitToAppraiser(page);
-    await documentByPidVerify(page);
-  });
-
-  test('bid evaluate', async ({page}) => {
-    await evaluate(page);
-  })
-
-  test('import document by pid invest 2', async ({page}) => {
-    await importDocumentByPid2(page);
-    await submitToAppraiser(page);
-    await verifyDocumentByPid2(page);
-  })
-});
-
-test.describe('test all shopping', () => {
-  test.describe.configure({mode: 'serial'});
-  test.setTimeout(900000);
-
-  test('create purchase', async ({page}) => {
-    await login(page, ROUTES.PURCHASE_PROPOSAL);
-    await searchPurchase({page});
-    await page.getByRole('button', {name: 'Thêm mới'}).click();
-    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới đề xuất mua sắm'});
-    let tableRow = page.locator('tbody tr');
-    let rowCount = await tableRow.count();
-    let count = 1;
-    if (rowCount > 0) {
-      const row = tableRow.first();
-      const oldName = await row.locator('td').nth(4).innerText();
-      const match = oldName.match(/đề xuất mua sắm (\d+)/i);
-      count = match ? parseInt(match[1]) + 1 : 1;
-    }
-    let nameSearch = getGlobalVariable('purchaseName') + ` ${count}`;
-    // await page.pause();
-    setGlobalVariable('lastPurchaseName', nameSearch);
-    await createPurchase(page, mainDialog, nameSearch);
-  });
-
-  test('purchase appraiser', async ({page}) => {
-    await login(page, ROUTES.PURCHASE_PROPOSAL);
-    const nameSearch = getGlobalVariable('listRemainPurchases').find(f => f.status === 'NEW')?.name;
-    await submitToAppraisalPurchase({page, nameSearch});
-  })
-
-  /*test('purchase adjustment', async ({page}) => {
-    await login(page, ROUTES.PURCHASE_PROPOSAL);
-    const nameSearch = getGlobalVariable('lastPurchaseName');
-    if (!nameSearch) {
-      await searchPurchase({page});
-    }
-    // await page.pause();
-    await adjustmentPurchase({page, nameSearch});
-  })*/
-
   test('purchase search form', async ({page}) => {
     test.setTimeout(180000);
     await login(page, ROUTES.PURCHASE_PROPOSAL);
@@ -678,61 +746,13 @@ test.describe('test all shopping', () => {
     locator = dialog.locator('input#procurementProposalDocumentNumber');
     await validateInputText({locator, maxLength: 100});
     await selectDate(page, dialog, 'decisionDay');
-    await selectOption(page, dialog, 'approvalLevel', '2. TGĐ');
+    await selectOption(page, dialog, 'approvalLevel', 'Ban TGĐ TCT');
     await dialog.locator('input[type="file"]').setInputFiles('assets/files/sample.pdf');
     // await saveForm({page, dialog});
   })
 
-  test('create selection_plan/ new package/ shopping full', async ({page}) => {
-    test.setTimeout(180000)
-    await login(page, '/CBMS_CONTRACTOR_SELECTION_PLAN_PURCHASE');
-    await searchSelectionPlan({page});
-    await page.getByRole('button', {name: 'Thêm mới'}).click();
-    const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
-    let tableRow = page.locator('tbody tr');
-    let rowCount = await tableRow.count();
-    let count = 1;
-    if (rowCount > 0) {
-      const row = tableRow.first();
-      const oldName = await row.locator('td').nth(4).innerText();
-      const match = oldName.match(new RegExp(`${getGlobalVariable('selectionPlanName')} (\\d+)`, 'i'));
-      count = match ? parseInt(match[1]) + 1 : 1;
-    }
-    const nameSearch = getGlobalVariable('selectionPlanName') + ` ${count}` + ' mua sắm';
-
-    await createSelectionPlanNewPackageShopping(page, mainDialog, nameSearch);
-    await appraiserSelectionPlanShopping({page, nameSearch});
-  });
-
-  test('create document by pid 3.1.11', async ({page}) => {
-    test.setTimeout(120000);
-    await loginAndSearch(page);
-
-    await updateDocumentByPid(page);
-  });
-
-  test('submit to appraisal document by pid', async ({page}) => {
-    await submitToAppraisalDocumentByPid(page);
-  });
-
-  test('appraisal document by pid', async ({page}) => {
-    await appraisalDocumentByPid(page);
-  });
-
-  test('evaluate', async ({page}) => {
-    test.setTimeout(180000);
-    await evaluate(page);
-  })
-  test('bid evaluation document', async ({page}) => {
-    await bidEvaluationDocumentShoppping(page);
-  })
-  test('propose bid evaluation shopping', async ({page}) => {
-    await proposeBidEvaluationShopping(page);
-  })
-  test('submit to appraisal bid evaluation shopping', async ({page}) => {
-    await submitToAppraisalShopping(page);
-  })
-  test('appraisal bid evaluation shopping', async ({page}) => {
-    await appraisalBidEvaluationShopping(page);
+  test('cost submission table visible', async ({page}) => {
+    await checkTablePageable({page});
+    await checkTableVisible({page});
   })
 })

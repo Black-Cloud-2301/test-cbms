@@ -131,8 +131,7 @@ export const selectDateV2 = async (page: Page, locator: Locator, labelText: stri
 }
 
 export const selectFile = async ({
-                                   locator, value, accept, fileType
-                                 }: { locator: Locator; value: string; accept?: string; fileType?: string }) => {
+  page, locator, value, accept, fileType}: { page: Page, locator: Locator; value: string; accept?: string; fileType?: string }) => {
   if (accept) {
     await locator.locator(`input[type="file"][accept*='${accept}']`).first().setInputFiles(value);
   } else
@@ -140,8 +139,9 @@ export const selectFile = async ({
 
   if (fileType) {
     const fileName = value.split('/').pop();
-    await locator.getByRole('row').filter({hasText: fileName}).first().getByRole('cell').filter({hasText: /^$/}).first().click();
-    await locator.locator('select').selectOption(fileType);
+    const row = locator.getByRole('row').filter({hasText: fileName}).first();
+    await row.getByRole('combobox').first().click();
+    await page.getByRole('option', {name: fileType}).click();
   }
 }
 

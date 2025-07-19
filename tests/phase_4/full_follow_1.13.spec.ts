@@ -2,6 +2,7 @@ import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
+import {getGlobalVariable} from '../../utils';
 
 const contractorName = CONTRACTOR_NAME_SEARCH;
 
@@ -10,24 +11,19 @@ test.describe('test document-by-pid shopping ver 2', () => {
   test.setTimeout(180000);
 
   test('save full', async ({page}) => {
-    await bidEvaluationDocumentShoppping(page);
-
-  })
-
-  test('propose bid evaluation', async ({page}) => {
-    await proposeBidEvaluationShopping(page);
+    await createDocumentByBidShopping({page});
   })
 
   test('submit to appraisal', async ({page}) => {
-    await submitToAppraisalShopping(page);
+    await submitToAppraisalShopping({page});
   })
 
   test('verify bid evaluation', async ({page}) => {
-    await appraisalBidEvaluationShopping(page);
+    await appraisalDocumentByPidShopping({page});
   })
 })
 test('save form 8', async ({page}) => {
-  await loginAndSearch(page);
+  await loginAndSearch({page});
 
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
@@ -126,11 +122,11 @@ test('save form 8', async ({page}) => {
     }
   }
 
-  await saveForm(page, subDialog);
+  await saveForm({page, dialog: subDialog});
 })
 
 test('save form 9', async ({page}) => {
-  await loginAndSearch(page);
+  await loginAndSearch({page});
 
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
@@ -163,45 +159,52 @@ test('save form 9', async ({page}) => {
       }
     }
   }
-  await saveForm(page, subDialog);
+  await saveForm({page, dialog: subDialog});
 })
 
 test('save form 10', async ({page}) => {
-  await loginAndSearch(page);
+  await loginAndSearch({page});
 
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
   const currentRow = mainDialog.getByRole('cell', {name: 'Tờ trình thẩm định và xin phê duyệt KQLCNT'}).locator('..');
   await currentRow.getByTitle('Cập nhật văn bản').click();
   const subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình thẩm định & phê duyệt KQLCNT'});
 
-  await saveForm(page, subDialog);
+  await saveForm({page, dialog: subDialog});
 })
 
 test('save form 11', async ({page}) => {
-  await loginAndSearch(page);
+  await loginAndSearch({page});
 
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
   const currentRow = mainDialog.getByRole('cell', {name: 'Quyết định phê duyệt KQLCNT'}).locator('..');
   await currentRow.getByTitle('Cập nhật văn bản').click();
   const subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
 
-  await saveForm(page, subDialog);
+  await saveForm({page, dialog:subDialog});
 })
 
-const saveForm = async (page: Page, dialog: Locator, url: string = '**/bid-evaluation/save', successText: string = 'Cập nhật bản ghi thành công') => {
-  await dialog.getByRole('button', {name: 'Ghi lại'}).click();
-
+const saveForm = async ({page, dialog, url = '/document-by-pid/save', successText = 'Cập nhật bản ghi thành công', buttonName = 'Ghi lại'}:{
+                          page: Page,
+                          dialog: Locator,
+                          url?: string,
+                          successText?: string;
+                          buttonName?: string;
+                        }) => {
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-  let resPromise = await page.waitForResponse(url);
-  let resJson = await resPromise.json();
+  const [res] = await Promise.all([
+    page.waitForResponse(res => res.url().includes(url) && res.status() === 200),
+    await dialog.getByRole('button', {name: buttonName}).click()
+  ])
+  let resJson = await res.json();
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
 }
 
-const loginAndSearch = async (page: Page) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+const loginAndSearch = async ({page, url}: { page: Page, url?: string }) => {
+  await login(page, url);
+  await page.locator(`input[name="keySearch"]`).fill(getGlobalVariable('lastContractorName'));
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -216,8 +219,11 @@ const checkSuccess = async (page: Page, url: string = '**/document-by-pid/import
   await alertSuccess.locator('.p-toast-icon-close').click();
 }
 
-export const bidEvaluationDocumentShoppping = async (page:Page) => {
-  await loginAndSearch(page);
+export const createDocumentByBidShopping = async ({page, url = '/CBMS_DOCUMENT_BY_PID'}: {
+  page: Page,
+  url?: string
+}) => {
+  await loginAndSearch({page, url});
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
   let currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo đánh giá HSDT'}).locator('..');
@@ -363,40 +369,32 @@ export const bidEvaluationDocumentShoppping = async (page:Page) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-  await saveForm(page, mainDialog);
+  await saveForm({page, dialog: mainDialog});
 }
 
-export const proposeBidEvaluationShopping=async (page:Page)=>{
-  await loginAndSearch(page);
-
-  await page.getByRole('button', {name: 'Trình thẩm định'}).click();
-
-  let resPromise = await page.waitForResponse('**/document-by-pid/propose');
-  let resJson = await resPromise.json();
-
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
-
-  expect(resJson.type).toEqual('SUCCESS');
-  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Trình thẩm định thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
-}
-
-export const submitToAppraisalShopping = async (page:Page)=> {
-  await login(page, '/CBMS_DOCUMENT_BY_PID');
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+export const submitToAppraisalShopping = async ({page, url='/CBMS_DOCUMENT_BY_PID'}:{page: Page, url?:string}) => {
+  await login(page, url);
+  await page.locator(`input[name="keySearch"]`).fill(getGlobalVariable('lastContractorName'));
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
 
-  await page.locator('.p-checkbox-box').first().click();
+  let tableRow = page.locator('tbody tr');
+  let rowCount = await tableRow.count();
+  expect(rowCount > 0);
+  const row = tableRow.first();
+  await expect(row.locator('td').first()).not.toHaveText('Không có dữ liệu');
+  await row.locator('p-checkbox').click();
 
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
-  await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
-  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submitToAppraiser`, 'Trình thẩm định thành công');
+  const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận trình thẩm định'});
+  await saveForm({page, dialog: confirmDialog, url, buttonName: 'Có', successText: 'Trình thẩm định thành công'});
 }
 
-export const appraisalBidEvaluationShopping = async (page:Page)=>{
-  await login(page, '/CBMS_DOCUMENT_BY_PID', USERS.PC);
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+
+
+export const appraisalDocumentByPidShopping = async ({page, url='/CBMS_DOCUMENT_BY_PID'}:{page: Page, url?:string}) => {
+  await login(page, url, USERS.PC);
+  await page.locator(`input[name="keySearch"]`).fill(getGlobalVariable('lastContractorName'));
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -437,7 +435,6 @@ export const appraisalBidEvaluationShopping = async (page:Page)=>{
     await row.locator('input#note').fill('Chú thích ' + (i + 1))
   }
 
-  await page.pause();
   await mainDialog.getByRole('button', {name: 'Xác nhận'}).click();
 
   let resPromise = await page.waitForResponse('**/document-by-pid/confirm');

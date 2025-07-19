@@ -1,28 +1,28 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {IUser, USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
-import {getGlobalVariable} from '../../utils';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
+import {getGlobalVariable, setGlobalVariable} from '../../utils';
+import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
+import {getAvailableContractorPurchase} from '../phase_4/selection_plan.spec';
 
-// const contractorName = getGlobalVariable('lastContractorName');
-const contractorName = CONTRACTOR_NAME_SEARCH;
 const totalImport = 6;
 
 test('bid evaluation full', async ({page}) => {
   test.setTimeout(180000);
 
-  await evaluate(page);
+  await evaluate({page, invest: true});
 })
 
 test('reevaluate', async ({page}) => {
   test.setTimeout(120000);
 
-  await reEvaluate(page);
+  await reEvaluate({page});
 })
 
 test('run step', async ({page}) => {
   // await saveStepFifth(page, true);
-  await saveStepSix(page, true);
+  await saveStepSix({page, isNew: true});
 })
 
 const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MODULE}/bid-evaluation/save`, successText: string = 'Lưu dữ liệu thành công') => {
@@ -37,17 +37,24 @@ const saveForm = async (page: Page, dialog: Locator, url: string = `**${CBMS_MOD
   // await page.pause();
 }
 
-const loginWithRoleAndSearch = async (page: Page, user: IUser, isNew: boolean = false) => {
+const loginWithRoleAndSearch = async ({page, user, isNew = false, url = ROUTES.BID_EVALUATION, invest = false}: {
+  page: Page,
+  user: IUser,
+  isNew?: boolean,
+  url?: string
+  invest?: boolean
+}) => {
   if (isNew) {
-    await login(page, '/CBMS_BID_EVALUATION/INVEST', user)
+    await login(page, url, user)
   } else {
-    await loginWithRole(page, user, '/CBMS_BID_EVALUATION/INVEST');
+    await loginWithRole(page, user, url);
   }
-  await search(page);
+  await search(page, invest);
 }
 
-const search = async (page: Page) => {
-  await page.locator(`input[name="keySearch"]`).fill(contractorName);
+const search = async (page: Page, invest: boolean = true) => {
+  const currentContractorName = invest ? getAvailableContractorInvest(CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1).name : getAvailableContractorPurchase({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
+  await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse((response) => {
     const urlMatch = response.url().includes(`${CBMS_MODULE}/contractor/doSearch`);
@@ -60,13 +67,13 @@ const search = async (page: Page) => {
     // const postData = request.postData();  // Nếu raw string
 
     // Ví dụ: check field cụ thể trong payload
-    return postData?.keySearch === contractorName;
+    return postData?.keySearch === currentContractorName;
   });
   await page.waitForTimeout(500);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 }
 
-const saveStepSecond = async (page: Page, isNew: boolean = false) => {
+const saveStepSecond = async (page: Page) => {
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   let evaluateDialog = page.getByRole('dialog', {name: 'Đánh giá tính hợp lệ'});
   const tableRow = mainDialog.locator('tbody tr');
@@ -92,8 +99,8 @@ const saveStepSecond = async (page: Page, isNew: boolean = false) => {
   await saveForm(page, mainDialog);
 }
 
-const saveStepThird = async (page: Page, isNew: boolean = false) => {
-  await search(page);
+const saveStepThird = async (page: Page, invest: boolean) => {
+  await search(page, invest);
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   const tableRow = mainDialog.locator('tbody tr');
   await checkCountBidder(page, 1);
@@ -127,8 +134,8 @@ const saveStepThird = async (page: Page, isNew: boolean = false) => {
   await saveForm(page, mainDialog);
 }
 
-const saveStepFourth = async (page: Page, isNew: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.HONG, isNew);
+const saveStepFourth = async ({page, isNew = false, url, invest = false}: { page: Page, isNew?: boolean, url?: string, invest?:boolean }) => {
+  await loginWithRoleAndSearch({page, user: USERS.HONG, isNew, url, invest});
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   const tableRow = mainDialog.locator('tbody tr');
   await checkCountBidder(page, 2);
@@ -153,8 +160,8 @@ const saveStepFourth = async (page: Page, isNew: boolean = false) => {
   await saveForm(page, mainDialog);
 }
 
-const saveStepFifth = async (page: Page, isNew: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.CAM_NHUNG, isNew);
+const saveStepFifth = async ({page, isNew, url, invest = false}: { page: Page, isNew?: boolean, url?: string, invest?:boolean }) => {
+  await loginWithRoleAndSearch({page, user: USERS.CAM_NHUNG, isNew, url, invest});
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   const tableRow = mainDialog.locator('tbody tr');
   await checkCountBidder(page, 3);
@@ -175,8 +182,15 @@ const saveStepFifth = async (page: Page, isNew: boolean = false) => {
   await saveForm(page, mainDialog);
 }
 
-const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boolean = false) => {
-  await loginWithRoleAndSearch(page, USERS.NHUNG, isNew);
+const saveStepSix = async ({page, isNew = false, reevaluate = false, url, purchase = false, invest = false}: {
+  page: Page,
+  isNew?: boolean,
+  reevaluate?: boolean,
+  url?: string;
+  purchase?: boolean,
+  invest?: boolean
+}) => {
+  await loginWithRoleAndSearch({page, user: USERS.NHUNG, isNew, url, invest});
 
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   await checkCountBidder(page, 4);
@@ -204,6 +218,16 @@ const saveStepSix = async (page: Page, isNew: boolean = false, reevaluate: boole
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
+
+  const currentContractorName = purchase ? getAvailableContractorPurchase({status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorInvest(CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1).name;
+  const listContractor = getGlobalVariable(purchase ? 'listContractorPurchase' :'listContractorInvest');
+  const updatedList = listContractor.map(c=> {
+    if(c.status === CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1 && c.name === currentContractorName) {
+      return {...c, status: CONTRACTOR_STATUS.EVALUATED}
+    }
+    return c;
+  });
+  setGlobalVariable(purchase ? 'listContractorPurchase' : 'listContractorInvest', updatedList);
 }
 
 const checkCountBidder = async (page: Page, step: number) => {
@@ -246,9 +270,9 @@ const checkCountBidder = async (page: Page, step: number) => {
   }
 }
 
-export const evaluate = async (page: Page) => {
-  await login(page, '/CBMS_BID_EVALUATION/INVEST', USERS.MANH);
-  await search(page);
+export const evaluate = async ({page, url = ROUTES.BID_EVALUATION, invest = true}: { page: Page, url?: string, invest?:boolean }) => {
+  await login(page, url, USERS.MANH);
+  await search(page, invest);
 
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
 
@@ -263,30 +287,29 @@ export const evaluate = async (page: Page) => {
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import dữ liệu thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
 
-
   await saveForm(page, mainDialog);
 
-  await loginWithRoleAndSearch(page, USERS.NHUNG);
+  await loginWithRoleAndSearch({page, user: USERS.NHUNG, url, invest});
   await checkCountBidder(page, 0);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   //   second step
   await saveStepSecond(page);
 
   // Step 3
-  await saveStepThird(page);
+  await saveStepThird(page, invest);
 
   // STEP 4
-  await saveStepFourth(page);
+  await saveStepFourth({page, url, invest});
 
   // await page.pause();
   // STEP 5
-  await saveStepFifth(page);
+  await saveStepFifth({page, url, invest});
   // STEP 6
-  await saveStepSix(page);
+  await saveStepSix({page, url, invest});
 }
 
-export const reEvaluate = async (page: Page) => {
-  await login(page, '/CBMS_BID_EVALUATION/INVEST', USERS.NHUNG);
+export const reEvaluate = async ({page, url = ROUTES.BID_EVALUATION}: { page: Page, url?: string }) => {
+  await login(page, url, USERS.NHUNG);
   await search(page);
   const reEvaluateButton = page.getByRole('button', {name: 'Đánh giá lại'});
 
@@ -373,7 +396,7 @@ export const reEvaluate = async (page: Page) => {
   }
 
   // STEP 4
-  await loginWithRoleAndSearch(page, USERS.HONG);
+  await loginWithRoleAndSearch({page, user: USERS.HONG});
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -401,7 +424,7 @@ export const reEvaluate = async (page: Page) => {
   }
 
   // STEP 5
-  await loginWithRoleAndSearch(page, USERS.CAM_NHUNG);
+  await loginWithRoleAndSearch({page, user: USERS.CAM_NHUNG});
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
@@ -423,5 +446,5 @@ export const reEvaluate = async (page: Page) => {
   }
 
   // STEP 6
-  await saveStepSix(page, false, true);
+  await saveStepSix({page, isNew: false, reevaluate: true});
 }
