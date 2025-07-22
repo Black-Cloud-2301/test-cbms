@@ -286,7 +286,7 @@ export const evaluate = async ({page, url = ROUTES.BID_EVALUATION, invest = true
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import dữ liệu thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
-
+  await page.waitForTimeout(500);
   await saveForm(page, mainDialog);
 
   await loginWithRoleAndSearch({page, user: USERS.NHUNG, url, invest});

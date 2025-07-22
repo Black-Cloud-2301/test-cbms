@@ -44,7 +44,6 @@ test('view pdf bid evaluation', async ({ page }) => {
       { label: 'NGƯỜI CAM KẾT', expected: 'Chu Tiến Dũng' },
       { label: 'Ủy viên', expected: 'Vũ Thế Huy' },
     ]);
-    await page.pause();
   }
 
 });

@@ -403,6 +403,7 @@ test('create selection_plan/ adjust/ investment project', async ({page}) => {
 
   await createContractor({page, mainDialog, totalValue, contractorSelectionPlanName: nameSearch, packageCount});
 
+  await page.pause();
   await saveForm({page, dialog: mainDialog});
 });
 
@@ -766,7 +767,8 @@ const createContractor = async ({
       name: contractorName,
       totalValue: contractorValue,
       status: CONTRACTOR_STATUS.NEW,
-      contractorSelectionPlanName: contractorSelectionPlanName
+      contractorSelectionPlanName: contractorSelectionPlanName,
+      selectContractorForm: i % 2 === 0 ? 'DTRR' : 'CDT'
     }]);
     setGlobalVariable('lastContractorName', contractorName);
   }
@@ -830,6 +832,7 @@ export const createSelectionPlanNewPackageInvest = async (page: Page, totalValue
     value: getGlobalVariable('lastPolicyName'),
     api: 'policy/doSearchLastVersion'
   });
+  await page.waitForTimeout(1000);
   await fillNumber(mainDialog, 'totalValue', '' + totalValue);
   await fillNumber(mainDialog, 'packageCount', '' + packageCount);
   await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST`);
@@ -982,6 +985,7 @@ const updateContractor = async (page: Page, mainDialog: Locator) => {
     await fillText(packageDialog, 'contractorName', newContractorName)
     await fillText(packageDialog, 'reason', 'Thích')
     await packageDialog.getByRole('button', {name: 'Ghi lại'}).click();
+    await packageDialog.waitFor({state: 'detached'});
   }
 
   return newContractorName;

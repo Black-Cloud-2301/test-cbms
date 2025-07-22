@@ -5,33 +5,86 @@
   "purchaseName": "TA autotest đề xuất mua sắm",
   "contractorPlanName": "TA autotest kế hoạch lựa chọn nhà thầu",
   "lastProjectName": "TA autotest dự án 1",
-  "lastPurchaseName": "TA autotest đề xuất mua sắm 26",
+  "lastPurchaseName": "TA autotest đề xuất mua sắm 4",
   "selectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu",
-  "lastSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 1",
-  "lastContractorName": "TA autotest 3",
+  "lastSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 4",
+  "lastContractorName": "TA autotest 16",
   "listContractorInvest": [
     {
-      "name": "TA autotest 1",
+      "name": "TA autotest 13",
+      "totalValue": 5000000,
+      "status": "EVALUATED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 3",
+      "selectContractorForm": "DTRR"
+    },
+    {
+      "name": "TA autotest 14",
+      "totalValue": 5000000,
+      "status": "APPRAISED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 3",
+      "selectContractorForm": "CDT"
+    },
+    {
+      "name": "TA autotest 15",
+      "totalValue": 5000000,
+      "status": "VERIFIED_DOCUMENT_BY_PID_V1",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 4",
+      "selectContractorForm": "DTRR"
+    },
+    {
+      "name": "TA autotest 16",
+      "totalValue": 5000000,
+      "status": "APPRAISED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 4",
+      "selectContractorForm": "CDT"
+    }
+  ],
+  "listContractorPurchase": [
+    {
+      "name": "TA autotest 10",
       "totalValue": 3000000,
       "status": "EVALUATED",
       "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 1"
     },
     {
-      "name": "TA autotest 2",
+      "name": "TA autotest 11",
       "totalValue": 3000000,
       "status": "APPRAISED",
       "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 1"
     },
     {
-      "name": "TA autotest 3",
+      "name": "TA autotest 12",
       "totalValue": 4000000,
       "status": "APPRAISED",
       "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 1"
     }
   ],
-  "listContractorPurchase": [],
   "lastCostSubmissionName": "",
-  "currentCostSubmissionName": "",
-  "listPurchase": [],
-  "listCostSubmission": []
+  "currentCostSubmissionName": "TA autotest tờ trình dự toán 3",
+  "listPurchase": [
+    {
+      "name": "TA autotest đề xuất mua sắm 3",
+      "totalPrice": 69850000,
+      "status": "APPRAISED",
+      "costSubmissionName": "TA autotest tờ trình dự toán 3"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 4",
+      "totalPrice": 69850000,
+      "status": "APPRAISED",
+      "costSubmissionName": null
+    }
+  ],
+  "listCostSubmission": [
+    {
+      "name": " 4",
+      "status": "NEW",
+      "totalValue": 69850000
+    },
+    {
+      "name": "TA autotest tờ trình dự toán 3",
+      "status": "APPRAISED",
+      "totalValue": 69850000
+    }
+  ]
 }

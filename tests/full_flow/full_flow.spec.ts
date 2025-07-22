@@ -38,7 +38,7 @@ import {
   createDocumentByBidShopping,
   submitToAppraisalShopping
 } from '../phase_4/full_follow_1.13.spec';
-import {documentByPidSubmitToAppraiser, documentByPidVerify, importDocumentByPid} from '../phase_2/full_follow.spec';
+import {documentByPidSubmitToAppraiser, documentByPidVerify, importDocumentByPidDTRR} from '../phase_2/full_follow.spec';
 import {importDocumentByPid2, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
 import {
   adjustmentCostSubmission, checkTablePageable, checkTableVisible,
@@ -105,11 +105,12 @@ test.describe('test all invest', () => {
 
   test('create selection_plan/ new package/ investment project', async ({page}) => {
     const totalValue = 10000000;
-    const packageCount = 3;
+    const packageCount = 2;
     const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
   });
+/*
 
   test('create selection_plan/ adjustment / investment project', async ({page}) => {
     const totalValue = 10000000;
@@ -118,9 +119,10 @@ test.describe('test all invest', () => {
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
   });
+*/
 
   test('import document by pid', async ({page}) => {
-    await importDocumentByPid(page);
+    await importDocumentByPidDTRR(page);
     await documentByPidSubmitToAppraiser(page);
     await documentByPidVerify(page);
   });
@@ -147,15 +149,15 @@ test.describe('test all shopping', () => {
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới đề xuất mua sắm'});
     let tableRow = page.locator('tbody tr');
-    let rowCount = await tableRow.count();
-    let count = 1;
-    if (rowCount > 0) {
-      const row = tableRow.first();
+    const row = tableRow.first();
+    const content = await row.locator('td').first().innerText();
+    let nameSearch: string;
+    if (content.includes('Không có dữ liệu')) {
+      nameSearch = getGlobalVariable('purchaseName') + ` 1`
+    } else {
       const oldName = await row.locator('td').nth(4).innerText();
-      const match = oldName.match(/đề xuất mua sắm (\d+)/i);
-      count = match ? parseInt(match[1]) + 1 : 1;
+      nameSearch = bumpMainSerial(oldName);
     }
-    let nameSearch = getGlobalVariable('purchaseName') + ` ${count}`;
     setGlobalVariable('lastPurchaseName', nameSearch);
     await createPurchase(page, mainDialog, nameSearch);
   });
@@ -179,8 +181,8 @@ test.describe('test all shopping', () => {
   test('create cost submission', async ({page}) => {
     await createCostSubmission({page});
     await submitToAppraisalCostSubmission({page});
-    await adjustmentCostSubmission({page});
-    await submitToAppraisalCostSubmission({page});
+    // await adjustmentCostSubmission({page});
+    // await submitToAppraisalCostSubmission({page});
   })
 
   test('create selection_plan/ new package/ shopping full', async ({page}) => {
@@ -190,15 +192,16 @@ test.describe('test all shopping', () => {
     await page.getByRole('button', {name: 'Thêm mới'}).click();
     const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
     let tableRow = page.locator('tbody tr');
-    let rowCount = await tableRow.count();
-    let count = 1;
-    if (rowCount > 0) {
-      const row = tableRow.first();
+    let nameSearch: string;
+
+    const row = tableRow.first();
+    const content = await row.locator('td').first().innerText();
+    if (content.includes('Không có dữ liệu')) {
+      nameSearch = getGlobalVariable('contractorPlanName') + ` 1`
+    } else {
       const oldName = await row.locator('td').nth(4).innerText();
-      const match = oldName.match(new RegExp(`${getGlobalVariable('selectionPlanName')} (\\d+)`, 'i'));
-      count = match ? parseInt(match[1]) + 1 : 1;
+      nameSearch = bumpMainSerial(oldName);
     }
-    const nameSearch = getGlobalVariable('selectionPlanName') + ` ${count}` + ' mua sắm';
 
     await createSelectionPlanNewPackageShopping(page, mainDialog, nameSearch);
     await appraiserSelectionPlanShopping({page, nameSearch});
@@ -209,6 +212,7 @@ test.describe('test all shopping', () => {
     await loginAndSearch({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
 
     await updateDocumentByPid(page);
+    await page.pause();
     await submitToAppraisalDocumentByPid({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
   });
 

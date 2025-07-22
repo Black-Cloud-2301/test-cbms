@@ -299,7 +299,7 @@ export const searchPurchase = async ({page, nameSearch}: {
 }
 
 export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch?: string) => {
-  const totalPrice = 100000000;
+  const totalPrice = 69850000;
   await fillText(mainDialog, 'purchaseRequestName', nameSearch);
   await fillText(mainDialog, 'procurementProposalContent', 'Mua cả thế giới');
   await fillNumber(mainDialog, 'propositionPurchasePrice', totalPrice.toString());
@@ -308,6 +308,8 @@ export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch
   await selectDate(page, mainDialog, 'decisionDay');
   await selectOption(page, mainDialog, 'approvalLevel', 'Ban TGĐ TCT');
   await selectFile({page,locator: mainDialog, value: 'assets/files/sample.pdf', fileType: 'Tờ trình/đề xuất được phê duyệt'});
+  await mainDialog.locator('input[type="file"][accept=".xls, .xlsx"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+  await page.getByRole('button', {name: 'Tải lên'}).click();
   await saveForm({page, dialog: mainDialog});
 
   const listPurchase = getGlobalVariable('listPurchase');

@@ -1,14 +1,14 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_STATUS} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {fillTextV2} from '../../utils/fill.utils';
 
 
 test('import document by pid', async ({page}) => {
   test.setTimeout(120000);
-  await importDocumentByPid(page);
+  await importDocumentByPidDTRR(page);
 })
 
 test('submit to appraiser', async ({page}) => {
@@ -55,9 +55,9 @@ const checkSuccess = async (
   await alertSuccess.locator('.p-toast-icon-close').click();
 };
 
-export const importDocumentByPid = async (page:Page) => {
+export const importDocumentByPidDTRR = async (page: Page) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED).name);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED, SELECT_CONTRACTOR_FORM_TYPE.DTRR).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
@@ -76,7 +76,7 @@ export const importDocumentByPid = async (page:Page) => {
     has: page.locator('span.p-dialog-title:text("Cập nhật bản cam kết HDDT")')
   });
 
-  await fillTextV2(subDialog,"commitHddtNo","SO_BAN_CAM_KET_TA_AUTOTEST_01")
+  await fillTextV2(subDialog, 'commitHddtNo', 'SO_BAN_CAM_KET_TA_AUTOTEST_01')
   await page.getByRole('button', {name: 'Tiếp'}).click();
 
 
@@ -101,12 +101,6 @@ export const importDocumentByPid = async (page:Page) => {
   // update dialog 2
   await page.getByRole('row', {name: 'Tờ trình thành lập TCG'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình thành lập tổ chuyên gia'});
-  const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
-
-  /*if (!await subDialog.locator('input#expertApproval').inputValue()) {
-    await subDialog.locator('input#expertApproval').pressSequentially('23/03/2025');
-    await datePickerCalendar.locator('span.p-highlight').first().click();
-  }*/
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
   const selectExpertDialog = page.getByRole('dialog').filter({
     has: page.locator('span.p-dialog-title:text("Tìm kiếm chuyên gia")')
@@ -118,10 +112,11 @@ export const importDocumentByPid = async (page:Page) => {
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(1).locator('span#approvalDecisionPlanSelection').click();
+    let row = subDialog.getByRole('rowgroup').locator('tr').nth(1);
+    await row.locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Pháp lý'}).click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(1).locator('#divisionLabor').fill("Nhận order");
-    await subDialog.getByRole('rowgroup').locator('tr').nth(1).locator('span#positionId').click();
+    await row.locator('#divisionLabor').fill('Nhận order');
+    await row.locator('span#positionId').click();
     await page.getByRole('option', {name: 'Tổ trưởng'}).click();
 
     await subDialog.locator('form span').nth(1).click();
@@ -131,7 +126,7 @@ export const importDocumentByPid = async (page:Page) => {
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
     await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Kỹ thuật - công nghệ'}).click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('#divisionLabor').fill("Làm bánh mỳ");
+    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('#divisionLabor').fill('Làm bánh mỳ');
     await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('span#positionId').click();
     await page.getByRole('option', {name: 'Thành viên'}).click();
 
@@ -142,7 +137,7 @@ export const importDocumentByPid = async (page:Page) => {
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
     await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Kinh tế - tài chính'}).click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('#divisionLabor').fill("Thu tiền");
+    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('#divisionLabor').fill('Thu tiền');
     await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#positionId').click();
     await page.getByRole('option', {name: 'Thành viên'}).click();
   }
@@ -174,7 +169,6 @@ export const importDocumentByPid = async (page:Page) => {
 
   await saveForm(page, subDialog);
 
-
   // update dialog 6
   await page.getByRole('row', {name: 'Báo cáo thẩm định E-HSMT'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo thẩm định E-HSMT'});
@@ -186,19 +180,19 @@ export const importDocumentByPid = async (page:Page) => {
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
 }
 
-export const documentByPidSubmitToAppraiser = async (page:Page) => {
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED).name);
+export const documentByPidSubmitToAppraiser = async (page: Page) => {
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED, SELECT_CONTRACTOR_FORM_TYPE.DTRR).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.locator('.p-checkbox-box').first().click();
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
-  await page.getByRole('alertdialog', {name: "Xác nhận trình thẩm định"}).getByRole('button', {name: 'Có'}).click();
+  await page.getByRole('alertdialog', {name: 'Xác nhận trình thẩm định'}).getByRole('button', {name: 'Có'}).click();
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submitToAppraiser`, 'Trình thẩm định thành công');
 }
 
-export const documentByPidVerify = async(page:Page) => {
+export const documentByPidVerify = async (page: Page) => {
   await loginWithRole(page, USERS.PC, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  const currentContractorName = getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED).name;
+  const currentContractorName = getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED, SELECT_CONTRACTOR_FORM_TYPE.DTRR).name;
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
@@ -237,8 +231,8 @@ export const documentByPidVerify = async(page:Page) => {
   await alertSuccess.locator('.p-toast-icon-close').click();
 
   const listContractor = getGlobalVariable('listContractorInvest');
-  const updatedList = listContractor.map(c=> {
-    if(c.status === CONTRACTOR_STATUS.APPRAISED && c.name === currentContractorName) {
+  const updatedList = listContractor.map(c => {
+    if (c.status === CONTRACTOR_STATUS.APPRAISED && c.name === currentContractorName) {
       return {...c, status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}
     }
     return c;
@@ -246,6 +240,6 @@ export const documentByPidVerify = async(page:Page) => {
   setGlobalVariable('listContractorInvest', updatedList);
 }
 
-export const getAvailableContractorInvest = (status: CONTRACTOR_STATUS, index: number = 0) => {
-  return getGlobalVariable('listContractorInvest').filter(c => c.status === status)[index];
+export const getAvailableContractorInvest = (status: CONTRACTOR_STATUS, type?: SELECT_CONTRACTOR_FORM_TYPE, index: number = 0) => {
+  return getGlobalVariable('listContractorInvest').filter(c => c.status === status && type  ? c.selectContractorForm === type : true)[index];
 }

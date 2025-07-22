@@ -1,10 +1,8 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
 import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 import {getGlobalVariable} from '../../utils';
 
-const contractorName = CONTRACTOR_NAME_SEARCH;
 
 test.describe('test document-by-pid shopping ver 2', () => {
   test.describe.configure({mode: 'serial'});

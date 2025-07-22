@@ -101,12 +101,40 @@ export const createCostSubmission = async ({page}: {
   await selectEmployeeDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`/sysUser/search`) && response.status() === 200);
   await selectEmployeeDialog.getByRole('row').nth(1).locator('a').click();
+  let table = mainDialog.locator('app-form-table').nth(1);
+  let tableRow = table.locator('tbody tr');
+  let row = tableRow.first();
+  await row.getByRole('combobox', {name: '--Chọn--'}).click();
+  await page.getByRole('option', {name: 'Phó TGĐ chuyên trách'}).click();
 
   await mainDialog.locator('input[name="employeeId"]').locator('xpath=../../../..').locator('span').first().click();
   await selectEmployeeDialog.locator('input[name="keySearch"]').fill(USERS.HONG.name);
   await selectEmployeeDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`/sysUser/search`) && response.status() === 200);
   await selectEmployeeDialog.getByRole('row').nth(1).locator('a').click();
+  row = tableRow.nth(1);
+  await row.getByRole('combobox', {name: '--Chọn--'}).click();
+  await page.getByRole('option', {name: 'Phòng kỹ thuật - công nghệ'}).click();
+
+  await mainDialog.locator('input[name="employeeId"]').locator('xpath=../../../..').locator('span').first().click();
+  await selectEmployeeDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
+  await selectEmployeeDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+  await page.waitForResponse(response => response.url().includes(`/sysUser/search`) && response.status() === 200);
+  await selectEmployeeDialog.getByRole('row').nth(1).locator('a').click();
+  row = tableRow.nth(2);
+  await row.getByRole('combobox', {name: '--Chọn--'}).click();
+  await page.getByRole('option', {name: 'Phòng tài chính - kế toán'}).click();
+
+  await mainDialog.locator('input[name="employeeId"]').locator('xpath=../../../..').locator('span').first().click();
+  await selectEmployeeDialog.locator('input[name="keySearch"]').fill(USERS.TUOI.name);
+  await selectEmployeeDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+  await page.waitForResponse(response => response.url().includes(`/sysUser/search`) && response.status() === 200);
+  await selectEmployeeDialog.getByRole('row').nth(1).locator('a').click();
+  row = tableRow.nth(3);
+  await row.getByRole('combobox', {name: '--Chọn--'}).click();
+  await page.getByRole('option', {name: 'Phòng mua sắm'}).click();
+
+
   await saveForm({page, dialog: mainDialog});
   const listCostSubmission = getGlobalVariable('listCostSubmission');
   setGlobalVariable('listCostSubmission', [...listCostSubmission, {name: nameSearch, status: CONTRACTOR_STATUS.NEW, totalValue: costSubmissionPrice}])
@@ -137,7 +165,7 @@ export const submitToAppraisalCostSubmission = async ({page}: { page: Page }) =>
     dialog: confirmDialog,
     buttonName: 'Có',
     url: '**/cost-submission/submitToAppraiser',
-    successText: 'Thẩm định thành công'
+    successText: 'Phê duyệt thành công'
   })
 
   const listCostSubmission = getGlobalVariable('listCostSubmission');
