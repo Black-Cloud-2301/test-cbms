@@ -4,6 +4,7 @@ import {USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS} from '../../constants/common';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
+import {fillTextV2, selectFile} from '../../utils/fill.utils';
 
 
 test.describe('test document-by-pid ver 2', () => {
@@ -12,7 +13,7 @@ test.describe('test document-by-pid ver 2', () => {
 
   test('save full', async ({page}) => {
 
-    await importDocumentByPid2(page);
+    await importDocumentByPid2DTRR(page);
   })
 
   test('propose bid evaluation', async ({page}) => {
@@ -207,6 +208,118 @@ const checkSuccess = async (page: Page, url: string = `**${CBMS_MODULE}/document
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
+}
+
+export const importDocumentByPid2DTRR = async (page: Page) => {
+  await loginAndSearch(page);
+
+  // save form 7
+  const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+
+  let currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo đánh giá E-HSDT'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+
+  let subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo đánh giá E-HSDT'});
+  await fillTextV2(subDialog, 'technicalNonComplianceExplanation', 'Thì là không đáp ứng kỹ thuật')
+  await selectFile({page, locator: subDialog, value: 'assets/files/sample-img.png'});
+
+
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  // save form 8
+  currentRow = mainDialog.getByRole('cell', {name: 'Kết quả đối chiếu tài liệu'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật kết quả đối chiếu tài liệu'});
+  await subDialog.getByRole('button', {name: 'Tiếp'}).click();
+  await subDialog.locator('form span').nth(1).click();
+  const selectUserDialog = page.getByRole('dialog').filter({
+    has: page.locator('span.p-dialog-title:text("Tìm kiếm danh sách nhân sự")')
+  });
+  await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
+  await selectUserDialog.getByRole('row').nth(1).locator('a').click();
+  await subDialog.locator('form span').nth(1).click();
+
+  await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
+  await selectUserDialog.getByRole('row').nth(1).locator('a').click();
+
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  // save form 9
+  currentRow = mainDialog.getByRole('cell', {name: 'Tờ trình phê duyệt KQLCNT'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt KQLCNT'});
+  await subDialog.getByRole('button', {name: 'Tiếp'}).click();
+  let table = subDialog.locator('app-form-table').first();
+  let tableRow = table.locator('tbody tr');
+  let countBidder = await tableRow.count();
+  for (let i = 0; i < countBidder; i++) {
+    await tableRow.nth(i).locator('input#validityNote').fill(i + 1 + ' kế toán đi tù');
+  }
+
+  table = subDialog.locator('app-form-table').nth(1);
+  tableRow = table.locator('tbody tr');
+  for (let i = 0; i < countBidder; i++) {
+    await tableRow.nth(i).locator('input#experienceNote').fill(i + 1 + ' năm kinh nghiệm');
+  }
+
+  table = subDialog.locator('app-form-table').nth(2);
+  tableRow = table.locator('tbody tr');
+  for (let i = 0; i < countBidder; i++) {
+    const row = tableRow.nth(i);
+    await row.locator('span[role=combobox]#sample').click();
+    if (i === 0) {
+      await page.getByRole('option', {name: 'Không đáp ứng'}).click();
+      await row.locator('#technologyNote').fill('Hàng dễ vỡ khi vận chuyển');
+    } else {
+      await page.getByRole('option', {name: 'Đáp ứng', exact: true}).click();
+      await row.locator('#technologyNote').fill('Hàng to ' + (i + 1) + ' cm');
+    }
+    await page.waitForTimeout(100);
+  }
+
+  table = subDialog.locator('app-form-table').nth(3);
+  tableRow = table.locator('tbody tr');
+  for (let i = 0; i < countBidder; i++) {
+    const row = tableRow.nth(i);
+    await row.locator('#errorCorrectionValue').pressSequentially(i + 1 + '00000');
+    await row.locator('#adjustmentDifferenceValue').pressSequentially(i + 5 + '0000');
+    await row.locator('#exchangeRate').pressSequentially(1 + ',0' + i);
+  }
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  // save form 10
+  currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo thẩm định KQLCNT'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật báo cáo thẩm định KQLCNT'});
+  await selectFile({page, locator: subDialog, value: 'assets/files/sample-img.png'});
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+// save form 11
+  currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
+  await subDialog.getByRole('button', {name: 'Tiếp'}).click();
+  await subDialog.locator('input[type="file"]').first().setInputFiles('assets/files/bm_danh_muc_nha_thau_trung_thau.xlsx');
+  await subDialog.getByRole('button', {name: 'Tải lên'}).first().click();
+  await subDialog.locator('input[type="file"]').nth(1).setInputFiles('assets/files/bm_thong_tin_nha_thau_khong_trung_thau.xlsx');
+  await subDialog.getByRole('button', {name: 'Tải lên'}).nth(1).click();
+  await subDialog.locator('input[type="file"]').nth(2).setInputFiles('assets/files/bm_thong_tin_hang_hoa_trung_thau.xlsx');
+  await subDialog.getByRole('button', {name: 'Tải lên'}).nth(2).click();
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  // save form 13
+  currentRow = mainDialog.getByRole('cell', {name: 'Thông báo KQLCNT'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật thông báo KQLCNT'});
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  // save form 14
+  currentRow = mainDialog.getByRole('cell', {name: 'Biên bản hoàn thiện hợp đồng'}).locator('..');
+  await currentRow.getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật biên bản hoàn thiện hợp đồng'});
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  await saveForm({page, dialog: mainDialog});
 }
 
 export const importDocumentByPid2 = async (page: Page) => {

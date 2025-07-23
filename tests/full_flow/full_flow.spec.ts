@@ -38,8 +38,13 @@ import {
   createDocumentByBidShopping,
   submitToAppraisalShopping
 } from '../phase_4/full_follow_1.13.spec';
-import {documentByPidSubmitToAppraiser, documentByPidVerify, importDocumentByPidDTRR} from '../phase_2/full_follow.spec';
-import {importDocumentByPid2, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
+import {
+  documentByPidSubmitToAppraiser,
+  documentByPidVerify,
+  importDocumentByPidCDT,
+  importDocumentByPidDTRR
+} from '../phase_2/full_follow.spec';
+import {importDocumentByPid2DTRR, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
 import {
   adjustmentCostSubmission, checkTablePageable, checkTableVisible,
   createCostSubmission,
@@ -132,11 +137,17 @@ test.describe('test all invest', () => {
   })
 
   test('import document by pid invest 2', async ({page}) => {
-    await importDocumentByPid2(page);
-    await page.pause();
+    await importDocumentByPid2DTRR(page);
     await submitToAppraiser(page);
     await verifyDocumentByPid2(page);
   })
+
+  test('import document by pid CDT', async ({page}) => {
+    await importDocumentByPidCDT(page);
+    await documentByPidSubmitToAppraiser(page);
+    await documentByPidVerify(page);
+  });
+
 });
 
 test.describe('test all shopping', () => {
