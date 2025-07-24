@@ -217,53 +217,53 @@ export const importDocumentByPidCDT = async (page: Page) => {
   await fillTextV2(subDialog, 'paymentTime', 'Mai');
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
 
-  const selectExpertDialog = page.getByRole('dialog').filter({
+  const selectUserDialog = page.getByRole('dialog').filter({
     has: page.locator('span.p-dialog-title:text("Tìm kiếm danh sách nhân sự")')
   });
   const tableRow = subDialog.locator('app-form-table[title="Danh sách tham gia đàm phán hợp đồng"] table tbody tr');
 
   if (await tableRow.count() < 4) {
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.NHUNG.name);
-    await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await selectUserDialog.locator('input[name="keySearch"]').fill(USERS.NHUNG.name);
+    await selectUserDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
-    await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
+    await selectUserDialog.getByRole('row').nth(1).locator('a').click();
     let row = tableRow.nth(0);
     await row.locator('span#role').click();
     await page.getByRole('option', {name: 'Tổ trưởng tổ mua sắm'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.HONG.name);
-    await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await selectUserDialog.locator('input[name="keySearch"]').fill(USERS.HONG.name);
+    await selectUserDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
-    await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
+    await selectUserDialog.getByRole('row').nth(1).locator('a').click();
     row = tableRow.nth(1);
     await row.locator('span#role').click();
     await page.getByRole('option', {name: 'Tổ phó tổ mua sắm'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
-    await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await selectUserDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
+    await selectUserDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
-    await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
+    await selectUserDialog.getByRole('row').nth(1).locator('a').click();
     row = tableRow.nth(2);
     await row.locator('span#role').click();
     await page.getByRole('option', {name: 'Phòng kỹ thuật - công nghệ'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
-    await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await selectUserDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
+    await selectUserDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
-    await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
+    await selectUserDialog.getByRole('row').nth(1).locator('a').click();
     row = tableRow.nth(3);
     await row.locator('span#role').click();
     await page.getByRole('option', {name: 'Phòng tài chính - kế toán'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
-    await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await selectUserDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
+    await selectUserDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/sysUser/search`) && response.status() === 200);
-    await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
+    await selectUserDialog.getByRole('row').nth(1).locator('a').click();
     row = tableRow.nth(4);
     await row.locator('span#role').click();
     await page.getByRole('option', {name: 'Phòng mua sắm'}).click();

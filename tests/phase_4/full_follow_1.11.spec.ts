@@ -295,12 +295,10 @@ export const appraisalDocumentByPid = async ({page, url = '/CBMS_DOCUMENT_BY_PID
   const resJson = await res.json();
   expect(resJson.type).toEqual('SUCCESS');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Xác nhận thành công');
-  await alertSuccess.locator('.p-toast-icon-close').click();
 
   const listContractor = getGlobalVariable('listContractorPurchase');
   const updatedList = listContractor.map(c => {
-    // TODO: check why not change status
-    if (c.status === CONTRACTOR_STATUS.APPRAISED && c.contractorSelectionPlanName === currentContractorName) {
+    if (c.status === CONTRACTOR_STATUS.APPRAISED && c.name === currentContractorName) {
       return {...c, status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1};
     }
     return c;

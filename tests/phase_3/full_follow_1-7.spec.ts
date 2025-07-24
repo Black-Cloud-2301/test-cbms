@@ -53,7 +53,7 @@ const loginWithRoleAndSearch = async ({page, user, isNew = false, url = ROUTES.B
 }
 
 const search = async (page: Page, invest: boolean = true) => {
-  const currentContractorName = invest ? getAvailableContractorInvest(CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1).name : getAvailableContractorPurchase({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
+  const currentContractorName = invest ? getAvailableContractorInvest({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorPurchase({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse((response) => {
@@ -219,7 +219,7 @@ const saveStepSix = async ({page, isNew = false, reevaluate = false, url, purcha
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
 
-  const currentContractorName = purchase ? getAvailableContractorPurchase({status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorInvest(CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1).name;
+  const currentContractorName = purchase ? getAvailableContractorPurchase({status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorInvest({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
   const listContractor = getGlobalVariable(purchase ? 'listContractorPurchase' :'listContractorInvest');
   const updatedList = listContractor.map(c=> {
     if(c.status === CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1 && c.name === currentContractorName) {

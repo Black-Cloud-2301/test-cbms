@@ -34,7 +34,7 @@ import {
 import {evaluate} from '../phase_3/full_follow_1-7.spec';
 import {
   appraisalDocumentByPidShopping,
-  createDocumentByBidShopping,
+  createDocumentByBidShoppingPhase2,
   submitToAppraisalShopping
 } from '../phase_4/full_follow_1.13.spec';
 import {
@@ -223,7 +223,6 @@ test.describe('test all shopping', () => {
     await loginAndSearch({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
 
     await updateDocumentByPid(page);
-    await page.pause();
     await submitToAppraisalDocumentByPid({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
   });
 
@@ -236,8 +235,8 @@ test.describe('test all shopping', () => {
     await evaluate({page, url: ROUTES.BID_EVALUATION_PURCHASE, invest: false});
   });
 
-  test('import document by pid shopping', async ({page}) => {
-    await createDocumentByBidShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+  test('import document by pid shopping phase 2', async ({page}) => {
+    await createDocumentByBidShoppingPhase2({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
   })
 
   test('submit to appraisal document by pid shopping', async ({page}) => {
