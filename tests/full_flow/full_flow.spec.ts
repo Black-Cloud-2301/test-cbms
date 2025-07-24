@@ -10,7 +10,7 @@ import {
   validateInputNumber,
   validateInputText
 } from '../../utils/validate.utils';
-import {ROUTES, URL_BE_BASE} from '../../constants/common';
+import {ROUTES, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../constants/common';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {validatePolicyTable, validateProjectTable} from '../../constants/validate-table/policy.constants';
@@ -20,7 +20,6 @@ import {createPurchase, searchPurchase, submitToAppraisalPurchase} from '../phas
 import {
   appraisalSelectionPlan,
   appraiserSelectionPlanShopping,
-  createSelectionPlanAdjustmentInvest,
   createSelectionPlanNewPackageInvest,
   createSelectionPlanNewPackageShopping,
   searchSelectionPlan,
@@ -46,7 +45,8 @@ import {
 } from '../phase_2/full_follow.spec';
 import {importDocumentByPid2DTRR, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
 import {
-  adjustmentCostSubmission, checkTablePageable, checkTableVisible,
+  checkTablePageable,
+  checkTableVisible,
   createCostSubmission,
   submitToAppraisalCostSubmission
 } from '../phase_4/cost-submission.spec';
@@ -115,21 +115,21 @@ test.describe('test all invest', () => {
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
   });
-/*
+  /*
 
-  test('create selection_plan/ adjustment / investment project', async ({page}) => {
-    const totalValue = 10000000;
-    const packageCount = 1;
-    const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
-    await submitToAppraiserSelectionPlan({page, nameSearch});
-    await appraisalSelectionPlan({page, nameSearch});
-  });
-*/
+    test('create selection_plan/ adjustment / investment project', async ({page}) => {
+      const totalValue = 10000000;
+      const packageCount = 1;
+      const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
+      await submitToAppraiserSelectionPlan({page, nameSearch});
+      await appraisalSelectionPlan({page, nameSearch});
+    });
+  */
 
   test('import document by pid', async ({page}) => {
     await importDocumentByPidDTRR(page);
-    await documentByPidSubmitToAppraiser(page);
-    await documentByPidVerify(page);
+    await documentByPidSubmitToAppraiser({page});
+    await documentByPidVerify({page});
   });
 
   test('bid evaluate', async ({page}) => {
@@ -144,8 +144,8 @@ test.describe('test all invest', () => {
 
   test('import document by pid CDT', async ({page}) => {
     await importDocumentByPidCDT(page);
-    await documentByPidSubmitToAppraiser(page);
-    await documentByPidVerify(page);
+    await documentByPidSubmitToAppraiser({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
+    await documentByPidVerify({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
   });
 
 });

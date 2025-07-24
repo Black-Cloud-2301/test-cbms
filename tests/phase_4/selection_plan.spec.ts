@@ -480,7 +480,7 @@ export const searchSelectionPlan = async ({page, nameSearch, url = '/contractor-
 
 export const createSelectionPlanNewPackageShopping = async (page, mainDialog: Locator, nameSearch?: string) => {
   const totalValue = 10000000;
-  const packageCount = 3;
+  const packageCount = 4;
 
   await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
   await fillText(mainDialog, 'contractorSelectionPlanName', nameSearch);
@@ -750,14 +750,16 @@ const createContractor = async ({
     usedValue += value;
     await page.waitForTimeout(500);
     let selectContractorFormValue = 'Đấu thầu rộng rãi';
-    if (invest) {
-      if (i % 2 === 1) {
-        selectContractorFormValue = 'Chỉ định thầu';
-      }
-    } else {
-      if (i % 2 === 1) {
-        selectContractorFormValue = 'Chỉ định thầu';
-      }
+    let selectContractorForm = 'DTRR';
+    if (i % 4 === 1) {
+      selectContractorFormValue = 'Chỉ định thầu';
+      selectContractorForm = 'CDT';
+    } else if (i % 4 === 2) {
+      selectContractorFormValue = 'Hợp đồng trực tiếp';
+      selectContractorForm = 'HDTT';
+    } else if (i % 4 === 3) {
+      selectContractorFormValue = 'Không hình thành gói thầu';
+      selectContractorForm = 'KHTGT';
     }
 
     await selectOption(page, packageDialog, 'selectContractorForm', selectContractorFormValue);
@@ -768,7 +770,7 @@ const createContractor = async ({
       totalValue: contractorValue,
       status: CONTRACTOR_STATUS.NEW,
       contractorSelectionPlanName: contractorSelectionPlanName,
-      selectContractorForm: i % 2 === 0 ? 'DTRR' : 'CDT'
+      selectContractorForm
     }]);
     setGlobalVariable('lastContractorName', contractorName);
   }
@@ -898,9 +900,9 @@ export const createSelectionPlanAdjustmentInvest = async (page: Page, totalValue
   await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST_MUA_SAM`);
   await selectDate(page, mainDialog, 'decisionApprovalDate');
   await mainDialog.locator('input-v2').filter({hasText: 'Gói sửa đổi *'}).locator('p-checkbox div').nth(2).click();
-  const editContractor = getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED);
+  const editContractor = getAvailableContractorInvest({status: CONTRACTOR_STATUS.APPRAISED});
   await fillNumber(mainDialog, 'totalValue', '' + (totalValue + editContractor.totalValue));
-  const deleteContractor = getAvailableContractorInvest(CONTRACTOR_STATUS.APPRAISED, 1);
+  const deleteContractor = getAvailableContractorInvest({status: CONTRACTOR_STATUS.APPRAISED, index: 1});
   await selectAutocompleteMulti({
     page,
     locator: mainDialog,

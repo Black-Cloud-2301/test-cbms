@@ -1,9 +1,8 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH, CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
+import {CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
-import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
 
 test.describe('test document-by-pid ver .11', () => {

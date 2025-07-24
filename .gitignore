@@ -7,4 +7,4 @@ node_modules/
 /playwright/.cache/
 tests/state.json
 errors
-*/index.meta.json
+**/index.meta.json
