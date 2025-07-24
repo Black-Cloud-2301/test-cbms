@@ -13,7 +13,7 @@ test.describe('test document-by-pid ver 2', () => {
 
   test('save full', async ({page}) => {
 
-    await importDocumentByPid2DTRR(page);
+    await importDocumentByPidPhase2DTRR(page);
   })
 
   test('propose bid evaluation', async ({page}) => {
@@ -195,7 +195,7 @@ const saveForm = async ({
 
 const loginAndSearch = async (page: Page) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.EVALUATED).name);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({status:CONTRACTOR_STATUS.EVALUATED}).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -210,11 +210,14 @@ const checkSuccess = async (page: Page, url: string = `**${CBMS_MODULE}/document
   await alertSuccess.locator('.p-toast-icon-close').click();
 }
 
-export const importDocumentByPid2DTRR = async (page: Page) => {
+export const importDocumentByPidPhase2DTRR = async (page: Page) => {
   await loginAndSearch(page);
 
   // save form 7
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
+  await page.locator('input[type="file"]').setInputFiles('assets/files/bm_DTRR_DADT_phase_2.xlsx');
+  await page.getByRole('button', {name: 'Tải lên'}).click();
+  await checkSuccess(page);
 
   let currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo đánh giá E-HSDT'}).locator('..');
   await currentRow.getByTitle('Cập nhật văn bản').click();
@@ -459,7 +462,7 @@ export const importDocumentByPid2 = async (page: Page) => {
 }
 
 export const submitToAppraiser = async (page:Page) => {
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest(CONTRACTOR_STATUS.EVALUATED).name);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({status: CONTRACTOR_STATUS.EVALUATED}).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
 
@@ -474,7 +477,7 @@ export const submitToAppraiser = async (page:Page) => {
 }
 
 export const verifyDocumentByPid2 = async (page:Page) => {
-  const currentContractorName = getAvailableContractorInvest(CONTRACTOR_STATUS.EVALUATED).name;
+  const currentContractorName = getAvailableContractorInvest({status:CONTRACTOR_STATUS.EVALUATED}).name;
   await loginWithRole(page, USERS.PC, '/CBMS_DOCUMENT_BY_PID_INVEST');
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();

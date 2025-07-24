@@ -9,7 +9,7 @@ import {
   selectFile,
   selectOption
 } from '../../utils/fill.utils';
-import {CBMS_MODULE, CONTRACTOR_STATUS, URL_BE_BASE} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../constants/common';
 import {
   checkSearchResponse,
   validateDataTable,
@@ -993,6 +993,6 @@ const updateContractor = async (page: Page, mainDialog: Locator) => {
   return newContractorName;
 }
 
-export const getAvailableContractorPurchase = ({status, index = 0}: { status: CONTRACTOR_STATUS, index?: number }) => {
-  return getGlobalVariable('listContractorPurchase').filter(c => c.status === status)[index];
+export const getAvailableContractorPurchase = ({status, type, index = 0}: { status: CONTRACTOR_STATUS,type?: SELECT_CONTRACTOR_FORM_TYPE, index?: number }) => {
+  return getGlobalVariable('listContractorPurchase').filter(c => c.status === status && (type ? c.selectContractorForm === type : true))[index];
 }

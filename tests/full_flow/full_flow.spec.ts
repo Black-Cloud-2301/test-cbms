@@ -34,7 +34,7 @@ import {
 import {evaluate} from '../phase_3/full_follow_1-7.spec';
 import {
   appraisalDocumentByPidShopping,
-  createDocumentByBidShoppingPhase2,
+  createDocumentByBidShoppingPhase2, createDocumentByPidShoppingCDT,
   submitToAppraisalShopping
 } from '../phase_4/full_follow_1.13.spec';
 import {
@@ -43,7 +43,7 @@ import {
   importDocumentByPidCDT,
   importDocumentByPidDTRR
 } from '../phase_2/full_follow.spec';
-import {importDocumentByPid2DTRR, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
+import {importDocumentByPidPhase2DTRR, submitToAppraiser, verifyDocumentByPid2} from '../phase_3/full_follow_1-8.spec';
 import {
   checkTablePageable,
   checkTableVisible,
@@ -136,8 +136,8 @@ test.describe('test all invest', () => {
     await evaluate({page});
   })
 
-  test('import document by pid invest 2', async ({page}) => {
-    await importDocumentByPid2DTRR(page);
+  test('import document by pid invest phase 2', async ({page}) => {
+    await importDocumentByPidPhase2DTRR(page);
     await submitToAppraiser(page);
     await verifyDocumentByPid2(page);
   })
@@ -246,6 +246,13 @@ test.describe('test all shopping', () => {
   test('appraisal document by pid shopping', async ({page}) => {
     await appraisalDocumentByPidShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
   })
+
+  test('import document by pid shopping CDT', async ({page}) => {
+    await createDocumentByPidShoppingCDT(page);
+    await documentByPidSubmitToAppraiser({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
+    await documentByPidVerify({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
+  });
+
 })
 
 test.describe('test visible', () => {

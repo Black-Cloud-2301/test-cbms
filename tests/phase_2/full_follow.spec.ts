@@ -99,7 +99,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
   await saveForm(page, subDialog);
 
   // update dialog 2
-  await page.getByRole('row', {name: 'Tờ trình thành lập TCG'}).getByTitle('Cập nhật văn bản').click();
+  await page.getByRole('row', {name: 'Tờ trình thành lập tổ chuyên gia'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình thành lập tổ chuyên gia'});
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
   const selectExpertDialog = page.getByRole('dialog').filter({
@@ -145,7 +145,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
   await saveForm(page, subDialog);
 
   // update dialog 3
-  await page.getByRole('row', {name: 'Quyết định thành lập TCG'}).getByTitle('Cập nhật văn bản').click();
+  await page.getByRole('row', {name: 'Quyết định thành lập tổ chuyên gia'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định tổ chuyên gia'});
   // const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
   // await datePickerCalendar.locator('span.p-highlight').first().click();
@@ -153,7 +153,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
   await saveForm(page, subDialog);
 
   // update dialog 4
-  await page.getByRole('row', {name: 'Tờ trình E-HSMT'}).getByTitle('Cập nhật văn bản').click();
+  await page.getByRole('row', {name: 'Tờ trình phê duyệt E-HSMT'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt E-HSMT'});
   // const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
   // await datePickerCalendar.locator('span.p-highlight').first().click();
@@ -287,7 +287,6 @@ export const importDocumentByPidCDT = async (page: Page) => {
   await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_danh_muc_hang_hoa.xlsx');
   await subDialog.getByRole('button', {name: 'Tải lên'}).click();
   await saveForm(page, subDialog);
-  await page.pause();
 
   await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
