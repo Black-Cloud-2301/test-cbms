@@ -176,6 +176,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
   // await datePickerCalendar.locator('td.p-datepicker-today').first().click();
 
   await saveForm(page, subDialog);
+  await page.pause();
   await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
 }

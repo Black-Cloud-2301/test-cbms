@@ -321,7 +321,7 @@ export const importDocumentByPidPhase2DTRR = async (page: Page) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật biên bản hoàn thiện hợp đồng'});
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-
+await page.pause();
   await saveForm({page, dialog: mainDialog});
 }
 

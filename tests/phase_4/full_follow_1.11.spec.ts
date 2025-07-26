@@ -1,7 +1,7 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
+import {CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
 
@@ -41,7 +41,7 @@ export const saveFormPurchase = async (page: Page, dialog: Locator, url: string 
 
 export const loginAndSearch = async ({page, url = ROUTES.DOCUMENT_BY_PID}: { page: Page, url?: string }) => {
   await login(page, url, USERS.MANH);
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorPurchase({status: CONTRACTOR_STATUS.APPRAISED}).name);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorPurchase({status: CONTRACTOR_STATUS.APPRAISED, type: SELECT_CONTRACTOR_FORM_TYPE.DTRR}).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
@@ -240,7 +240,7 @@ export const submitToAppraisalDocumentByPid = async ({page, url = ROUTES.DOCUMEN
   url?: string
 }) => {
   await loginWithRole(page, USERS.MANH, url);
-  const currentContractor = getAvailableContractorPurchase({status:CONTRACTOR_STATUS.APPRAISED}).name;
+  const currentContractor = getAvailableContractorPurchase({status:CONTRACTOR_STATUS.APPRAISED, type: SELECT_CONTRACTOR_FORM_TYPE.DTRR}).name;
   await page.locator(`input[name="keySearch"]`).fill(currentContractor);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
