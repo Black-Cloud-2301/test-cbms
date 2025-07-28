@@ -182,13 +182,12 @@ const saveStepFifth = async ({page, isNew, url, invest = false}: { page: Page, i
   await saveForm(page, mainDialog);
 }
 
-const saveStepSix = async ({page, isNew = false, reevaluate = false, url, purchase = false, invest = false}: {
+const saveStepSix = async ({page, isNew = false, reevaluate = false, url, invest = false}: {
   page: Page,
   isNew?: boolean,
   reevaluate?: boolean,
   url?: string;
-  purchase?: boolean,
-  invest?: boolean
+  invest?: boolean,
 }) => {
   await loginWithRoleAndSearch({page, user: USERS.NHUNG, isNew, url, invest});
 
@@ -219,15 +218,15 @@ const saveStepSix = async ({page, isNew = false, reevaluate = false, url, purcha
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Đánh giá thành công');
   await alertSuccess.locator('.p-toast-icon-close').click();
 
-  const currentContractorName = purchase ? getAvailableContractorPurchase({status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorInvest({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
-  const listContractor = getGlobalVariable(purchase ? 'listContractorPurchase' :'listContractorInvest');
+  const currentContractorName = invest ? getAvailableContractorInvest({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorPurchase({status: CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
+  const listContractor = getGlobalVariable(invest ? 'listContractorInvest' :'listContractorPurchase');
   const updatedList = listContractor.map(c=> {
     if(c.status === CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1 && c.name === currentContractorName) {
       return {...c, status: CONTRACTOR_STATUS.EVALUATED}
     }
     return c;
   });
-  setGlobalVariable(purchase ? 'listContractorPurchase' : 'listContractorInvest', updatedList);
+  setGlobalVariable(invest ? 'listContractorInvest' : 'listContractorPurchase', updatedList);
 }
 
 const checkCountBidder = async (page: Page, step: number) => {

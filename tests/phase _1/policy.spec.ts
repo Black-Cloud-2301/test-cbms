@@ -1,7 +1,15 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {fillEditor, fillNumber, fillTextV2, selectDateV2, selectFile, selectOptionV2} from '../../utils/fill.utils';
+import {
+  fillEditor,
+  fillNumber,
+  fillTextV2,
+  selectDate,
+  selectDateV2,
+  selectFile,
+  selectOptionV2
+} from '../../utils/fill.utils';
 import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
 import {URL_BE_BASE} from '../../constants/common';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
@@ -352,9 +360,10 @@ export const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: 
   await selectOptionV2(page, mainDialog, 'Nhóm dự án', 'Nhóm A');
   await selectOptionV2(page, mainDialog, 'Loại dự án', 'Đầu tư xây dựng');
   await selectOptionV2(page, mainDialog, 'Thời gian triển khai từ', 'I');
-  await selectDateV2(page, mainDialog, 'Năm', '2025', 'year');
+  await selectDate(page, mainDialog, 'yearFrom', '2025');
   await selectOptionV2(page, mainDialog, 'Đến', 'I');
-  await selectDateV2(page, mainDialog, 'Năm', '2026', 'year', 1);
+  // await selectDateV2(page, mainDialog, 'Năm', '2026', 'year', 1);
+  await selectDate(page, mainDialog, 'yearTo', '2026');
   // await fillNumber(mainDialog, 'implementationDate', '1');
   await selectOptionV2(page, mainDialog, 'Thời gian theo', 'Năm');
   await fillNumber(mainDialog, 'investmentScale', '100');

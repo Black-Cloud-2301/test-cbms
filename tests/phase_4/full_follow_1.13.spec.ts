@@ -182,16 +182,22 @@ test('save form 11', async ({page}) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
   const subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
 
-  await saveForm({page, dialog:subDialog});
+  await saveForm({page, dialog: subDialog});
 })
 
-const saveForm = async ({page, dialog, url = '/document-by-pid/save', successText = 'Cập nhật bản ghi thành công', buttonName = 'Ghi lại'}:{
-                          page: Page,
-                          dialog: Locator,
-                          url?: string,
-                          successText?: string;
-                          buttonName?: string;
-                        }) => {
+const saveForm = async ({
+                          page,
+                          dialog,
+                          url = '/document-by-pid/save',
+                          successText = 'Cập nhật bản ghi thành công',
+                          buttonName = 'Ghi lại'
+                        }: {
+  page: Page,
+  dialog: Locator,
+  url?: string,
+  successText?: string;
+  buttonName?: string;
+}) => {
   const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
   const [res] = await Promise.all([
     page.waitForResponse(res => res.url().includes(url) && res.status() === 200),
@@ -205,7 +211,11 @@ const saveForm = async ({page, dialog, url = '/document-by-pid/save', successTex
 
 const loginAndSearch = async ({page, url}: { page: Page, url?: string }) => {
   await login(page, url);
-  await page.locator(`input[name="keySearch"]`).fill(getGlobalVariable('lastContractorName'));
+  const currentContractor = getAvailableContractorPurchase({
+    status: CONTRACTOR_STATUS.EVALUATED,
+    type: SELECT_CONTRACTOR_FORM_TYPE.DTRR
+  }).name;
+  await page.locator(`input[name="keySearch"]`).fill(currentContractor);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -322,11 +332,11 @@ export const createDocumentByBidShoppingPhase2 = async ({page, url = '/CBMS_DOCU
   await saveForm({page, dialog: mainDialog});
 }
 
-export const createDocumentByPidShoppingCDT = async (page: Page) => {
+export const createDocumentByPidShoppingCDT = async ({page, isCDT = true}: { page: Page, isCDT?: boolean }) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_PURCHASE');
   await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorPurchase({
-    status:CONTRACTOR_STATUS.APPRAISED,
-    type:SELECT_CONTRACTOR_FORM_TYPE.CDT
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: isCDT ? SELECT_CONTRACTOR_FORM_TYPE.CDT : SELECT_CONTRACTOR_FORM_TYPE.HDTT
   }).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
@@ -463,14 +473,21 @@ export const createDocumentByPidShoppingCDT = async (page: Page) => {
   });
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
 
-  await page.pause()
   await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
-  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');;
+  await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
+  ;
 }
 
-export const submitToAppraisalShopping = async ({page, url='/CBMS_DOCUMENT_BY_PID'}:{page: Page, url?:string}) => {
+export const submitToAppraisalShopping = async ({page, url = '/CBMS_DOCUMENT_BY_PID'}: {
+  page: Page,
+  url?: string
+}) => {
   await login(page, url);
-  await page.locator(`input[name="keySearch"]`).fill(getGlobalVariable('lastContractorName'));
+  const currentContractorName = getAvailableContractorPurchase({
+    status: CONTRACTOR_STATUS.EVALUATED,
+    type: SELECT_CONTRACTOR_FORM_TYPE.DTRR
+  }).name;
+  await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
 
@@ -487,10 +504,16 @@ export const submitToAppraisalShopping = async ({page, url='/CBMS_DOCUMENT_BY_PI
 }
 
 
-
-export const appraisalDocumentByPidShopping = async ({page, url='/CBMS_DOCUMENT_BY_PID'}:{page: Page, url?:string}) => {
+export const appraisalDocumentByPidShopping = async ({page, url = '/CBMS_DOCUMENT_BY_PID'}: {
+  page: Page,
+  url?: string
+}) => {
   await login(page, url, USERS.PC);
-  await page.locator(`input[name="keySearch"]`).fill(getGlobalVariable('lastContractorName'));
+  const currentContractorName = getAvailableContractorPurchase({
+    status: CONTRACTOR_STATUS.EVALUATED,
+    type: SELECT_CONTRACTOR_FORM_TYPE.DTRR
+  }).name;
+  await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();

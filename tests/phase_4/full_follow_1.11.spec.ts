@@ -259,7 +259,7 @@ export const appraisalDocumentByPid = async ({page, url = '/CBMS_DOCUMENT_BY_PID
 }) => {
   await login(page, url, USERS.PC);
 
-  const currentContractorName = getAvailableContractorPurchase({status:CONTRACTOR_STATUS.APPRAISED}).name;
+  const currentContractorName = getAvailableContractorPurchase({status:CONTRACTOR_STATUS.APPRAISED, type: SELECT_CONTRACTOR_FORM_TYPE.DTRR}).name;
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);

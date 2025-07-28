@@ -4,6 +4,7 @@ import {USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {fillTextV2, selectFile} from '../../utils/fill.utils';
+import {getAvailableContractorPurchase} from '../phase_4/selection_plan.spec';
 
 
 test('import document by pid', async ({page}) => {
@@ -57,7 +58,10 @@ const checkSuccess = async (
 
 export const importDocumentByPidDTRR = async (page: Page) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({status:CONTRACTOR_STATUS.APPRAISED, type:SELECT_CONTRACTOR_FORM_TYPE.DTRR}).name);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: SELECT_CONTRACTOR_FORM_TYPE.DTRR
+  }).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist văn bản pháp lý').first().click();
@@ -184,8 +188,8 @@ export const importDocumentByPidDTRR = async (page: Page) => {
 export const importDocumentByPidCDT = async (page: Page) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
   await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({
-    status:CONTRACTOR_STATUS.APPRAISED,
-    type:SELECT_CONTRACTOR_FORM_TYPE.CDT
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: SELECT_CONTRACTOR_FORM_TYPE.CDT
   }).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
@@ -293,11 +297,18 @@ export const importDocumentByPidCDT = async (page: Page) => {
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
 }
 
-export const documentByPidSubmitToAppraiser = async ({page, selectContractorForm = SELECT_CONTRACTOR_FORM_TYPE.DTRR}: {
+export const documentByPidSubmitToAppraiser = async ({page, invest = true, selectContractorForm = SELECT_CONTRACTOR_FORM_TYPE.DTRR}: {
   page: Page,
+  invest: boolean
   selectContractorForm?: SELECT_CONTRACTOR_FORM_TYPE
 }) => {
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({status:CONTRACTOR_STATUS.APPRAISED, type:selectContractorForm}).name);
+  await page.locator(`input[name="keySearch"]`).fill(invest ? getAvailableContractorInvest({
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: selectContractorForm
+  }).name : getAvailableContractorPurchase({
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: selectContractorForm
+  }).name );
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.locator('.p-checkbox-box').first().click();
@@ -306,12 +317,19 @@ export const documentByPidSubmitToAppraiser = async ({page, selectContractorForm
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/submitToAppraiser`, 'Trình thẩm định thành công');
 }
 
-export const documentByPidVerify = async ({page, selectContractorForm = SELECT_CONTRACTOR_FORM_TYPE.DTRR}: {
-  page: Page,
-  selectContractorForm?: SELECT_CONTRACTOR_FORM_TYPE
+export const documentByPidVerify = async ({page, invest = true, selectContractorForm = SELECT_CONTRACTOR_FORM_TYPE.DTRR}: {
+  page: Page;
+  invest?: boolean;
+  selectContractorForm?: SELECT_CONTRACTOR_FORM_TYPE;
 }) => {
-  await loginWithRole(page, USERS.PC, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  const currentContractorName = getAvailableContractorInvest({status:CONTRACTOR_STATUS.APPRAISED, type:selectContractorForm}).name;
+  await loginWithRole(page, USERS.PC, invest ? '/CBMS_DOCUMENT_BY_PID_INVEST' : '/CBMS_DOCUMENT_BY_PID_PURCHASE');
+  const currentContractorName = invest ? getAvailableContractorInvest({
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: selectContractorForm
+  }).name : getAvailableContractorPurchase({
+    status: CONTRACTOR_STATUS.APPRAISED,
+    type: selectContractorForm
+  }).name;
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
@@ -359,9 +377,9 @@ export const documentByPidVerify = async ({page, selectContractorForm = SELECT_C
   setGlobalVariable('listContractorInvest', updatedList);
 }
 
-export const getAvailableContractorInvest = ({status,type, index = 0}:{
-                                               status: CONTRACTOR_STATUS,
-                                               type?: SELECT_CONTRACTOR_FORM_TYPE,
+export const getAvailableContractorInvest = ({status, type, index = 0}: {
+  status: CONTRACTOR_STATUS,
+  type?: SELECT_CONTRACTOR_FORM_TYPE,
   index?: number
 }) => {
   return getGlobalVariable('listContractorInvest').filter(c => c.status === status && (type ? c.selectContractorForm === type : true))[index];

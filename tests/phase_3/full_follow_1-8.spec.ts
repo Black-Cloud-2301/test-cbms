@@ -1,7 +1,7 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_STATUS} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
 import {fillTextV2, selectFile} from '../../utils/fill.utils';
@@ -193,9 +193,9 @@ const saveForm = async ({
   await alertSuccess.locator('.p-toast-icon-close').click();
 }
 
-const loginAndSearch = async (page: Page) => {
+const loginAndSearch = async (page: Page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
-  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({status:CONTRACTOR_STATUS.EVALUATED}).name);
+  await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorInvest({status:CONTRACTOR_STATUS.EVALUATED, type: selectContractorForm}).name);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/contractor/doSearch`) && response.status() === 200);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
@@ -211,7 +211,7 @@ const checkSuccess = async (page: Page, url: string = `**${CBMS_MODULE}/document
 }
 
 export const importDocumentByPidPhase2DTRR = async (page: Page) => {
-  await loginAndSearch(page);
+  await loginAndSearch(page, SELECT_CONTRACTOR_FORM_TYPE.DTRR);
 
   // save form 7
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
@@ -298,6 +298,7 @@ export const importDocumentByPidPhase2DTRR = async (page: Page) => {
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
 
 // save form 11
+  await page.pause()
   currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
   await currentRow.getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
@@ -477,7 +478,7 @@ export const submitToAppraiser = async (page:Page) => {
 }
 
 export const verifyDocumentByPid2 = async (page:Page) => {
-  const currentContractorName = getAvailableContractorInvest({status:CONTRACTOR_STATUS.EVALUATED}).name;
+  const currentContractorName = getAvailableContractorInvest({status:CONTRACTOR_STATUS.EVALUATED, type: SELECT_CONTRACTOR_FORM_TYPE.DTRR}).name;
   await loginWithRole(page, USERS.PC, '/CBMS_DOCUMENT_BY_PID_INVEST');
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();

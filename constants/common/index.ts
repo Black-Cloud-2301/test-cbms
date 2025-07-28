@@ -29,4 +29,6 @@ export enum CONTRACTOR_STATUS {
 export enum SELECT_CONTRACTOR_FORM_TYPE {
   DTRR = 'DTRR',
   CDT = 'CDT',
+  HDTT = 'HDTT',
+  KHTGT = 'KHTGT',
 }

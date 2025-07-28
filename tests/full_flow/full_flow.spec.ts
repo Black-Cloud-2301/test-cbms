@@ -16,10 +16,10 @@ import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {validatePolicyTable, validateProjectTable} from '../../constants/validate-table/policy.constants';
 import {appraisalPolicy, createPolicy, searchPolicy, submitToAppraisalPolicy} from '../phase _1/policy.spec';
 import {appraisalProject, createProject, searchProject, submitToAppraisalProject} from '../phase _1/project.spec';
-import {createPurchase, searchPurchase, submitToAppraisalPurchase} from '../phase_4/purchase.spec';
+import {adjustmentPurchase, createPurchase, searchPurchase, submitToAppraisalPurchase} from '../phase_4/purchase.spec';
 import {
   appraisalSelectionPlan,
-  appraiserSelectionPlanShopping,
+  appraiserSelectionPlanShopping, createSelectionPlanAdjustmentInvest,
   createSelectionPlanNewPackageInvest,
   createSelectionPlanNewPackageShopping,
   searchSelectionPlan,
@@ -115,16 +115,14 @@ test.describe('test all invest', () => {
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
   });
-  /*
 
-    test('create selection_plan/ adjustment / investment project', async ({page}) => {
-      const totalValue = 10000000;
-      const packageCount = 1;
-      const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
-      await submitToAppraiserSelectionPlan({page, nameSearch});
-      await appraisalSelectionPlan({page, nameSearch});
-    });
-  */
+  test('create selection_plan/ adjustment / investment project', async ({page}) => {
+    const totalValue = 10000000;
+    const packageCount = 1;
+    const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
+    await submitToAppraiserSelectionPlan({page, nameSearch});
+    await appraisalSelectionPlan({page, nameSearch});
+  });
 
   test('import document by pid', async ({page}) => {
     await importDocumentByPidDTRR(page);
@@ -248,9 +246,14 @@ test.describe('test all shopping', () => {
   })
 
   test('import document by pid shopping CDT', async ({page}) => {
-    await createDocumentByPidShoppingCDT(page);
-    await documentByPidSubmitToAppraiser({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
-    await documentByPidVerify({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
+    await createDocumentByPidShoppingCDT({page});
+    await documentByPidSubmitToAppraiser({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
+    await documentByPidVerify({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
+  });
+  test('import document by pid shopping HDTT', async ({page}) => {
+    await createDocumentByPidShoppingCDT({page, isCDT: false});
+    await documentByPidSubmitToAppraiser({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.HDTT});
+    await documentByPidVerify({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.HDTT});
   });
 
 })

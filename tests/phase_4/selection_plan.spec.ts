@@ -940,7 +940,7 @@ export const createSelectionPlanAdjustmentInvest = async (page: Page, totalValue
     value: 'assets/files/sample-2.pdf',
     fileType: 'Quyết định phê duyệt KHLCNT'
   });
-
+await page.pause()
 
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   // await page.pause();
