@@ -515,6 +515,7 @@ export const createSelectionPlanNewPackageShopping = async (page, mainDialog: Lo
   await fillNumber(mainDialog, 'packageCount', '' + packageCount);
   await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST_MUA_SAM`);
   await selectDate(page, mainDialog, 'decisionApprovalDate');
+  await page.pause()
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   // await page.pause();
   await createContractor({
@@ -760,18 +761,20 @@ const createContractor = async ({
     } else if (i % 4 === 3) {
       selectContractorFormValue = 'Không hình thành gói thầu';
       selectContractorForm = 'KHTGT';
+    } else {
+      await page.pause();
     }
 
     await selectOption(page, packageDialog, 'selectContractorForm', selectContractorFormValue);
     await packageDialog.getByRole('button', {name: 'Ghi lại'}).click();
     const listContractor = getGlobalVariable(invest ? 'listContractorInvest' : 'listContractorPurchase');
-    setGlobalVariable(invest ? 'listContractorInvest' : 'listContractorPurchase', [...listContractor, {
+    setGlobalVariable(invest ? 'listContractorInvest' : 'listContractorPurchase', [{
       name: contractorName,
       totalValue: contractorValue,
       status: CONTRACTOR_STATUS.NEW,
       contractorSelectionPlanName: contractorSelectionPlanName,
       selectContractorForm
-    }]);
+    }, ...listContractor]);
     setGlobalVariable('lastContractorName', contractorName);
   }
 }

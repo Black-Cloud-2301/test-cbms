@@ -1,8 +1,8 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
-import {USERS} from '../../constants/user';
+import {IUser, USERS} from '../../constants/user';
 import {getGlobalVariable} from '../../utils';
-import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
 
@@ -332,8 +332,8 @@ export const createDocumentByBidShoppingPhase2 = async ({page, url = '/CBMS_DOCU
   await saveForm({page, dialog: mainDialog});
 }
 
-export const createDocumentByPidShoppingCDT = async ({page, isCDT = true}: { page: Page, isCDT?: boolean }) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID_PURCHASE');
+export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, isCDT = true}: { page: Page, isCDT?: boolean, user?:IUser }) => {
+  await login(page, '/CBMS_DOCUMENT_BY_PID_PURCHASE', user);
   await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorPurchase({
     status: CONTRACTOR_STATUS.APPRAISED,
     type: isCDT ? SELECT_CONTRACTOR_FORM_TYPE.CDT : SELECT_CONTRACTOR_FORM_TYPE.HDTT
@@ -472,13 +472,14 @@ export const createDocumentByPidShoppingCDT = async ({page, isCDT = true}: { pag
     has: page.locator('span.p-dialog-title:text("Cập nhật quyết định phê duyệt kết quả thương thảo")')
   });
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+  await page.pause();
 
   await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
   ;
 }
 
-export const submitToAppraisalShopping = async ({page, url = '/CBMS_DOCUMENT_BY_PID'}: {
+export const submitToAppraisalShopping = async ({page, url = ROUTES.DOCUMENT_BY_PID_PURCHASE}: {
   page: Page,
   url?: string
 }) => {
@@ -500,11 +501,12 @@ export const submitToAppraisalShopping = async ({page, url = '/CBMS_DOCUMENT_BY_
 
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
   const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận trình thẩm định'});
-  await saveForm({page, dialog: confirmDialog, url, buttonName: 'Có', successText: 'Trình thẩm định thành công'});
+  await page.pause();
+  await saveForm({page, dialog: confirmDialog, url:'**/document-by-pid/submitToAppraiser', buttonName: 'Có', successText: 'Trình thẩm định thành công'});
 }
 
 
-export const appraisalDocumentByPidShopping = async ({page, url = '/CBMS_DOCUMENT_BY_PID'}: {
+export const appraisalDocumentByPidShopping = async ({page, url = ROUTES.DOCUMENT_BY_PID_PURCHASE}: {
   page: Page,
   url?: string
 }) => {

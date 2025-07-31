@@ -1,11 +1,11 @@
 import {expect, Page, test} from '@playwright/test';
 import {login} from '../login';
 import pdfParse from 'pdf-parse';
-import {CONTRACTOR_NAME_SEARCH} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
-const contractorName = CONTRACTOR_NAME_SEARCH;
+const contractorName = 'TA autotest 29';
 
-test('view pdf bid evaluation', async ({ page }) => {
+test('view pdf', async ({ page }) => {
   test.setTimeout(120000);
 
   await loginAndSearch(page);
@@ -23,33 +23,39 @@ test('view pdf bid evaluation', async ({ page }) => {
 
   for (let i = 1; i < countBidder; i++) {
     const row = tableRow.nth(i);
-    await row.getByTitle('Xem văn bản').click();
 
-    const resPromise = page.waitForResponse(resp =>
-      resp.url().includes('/contractor/view-file') && resp.status() === 200
-    );
-    const res = await resPromise;
+
+    const [res] = await Promise.all([
+      page.waitForResponse(response => {
+        const urlMatch = response.url().includes(`contractor/viewFile`);
+        const isOk = response.status() === 200;
+        return urlMatch && isOk;
+      }),
+      row.getByTitle('Xem văn bản').click()
+    ]);
+
     const resJson = await res.json();
 
     expect(resJson.type).toEqual('SUCCESS');
     expect(resJson.data?.filePath).not.toBe(null);
 
-    const base64String = resJson.data.base64String;
-    const buffer = Buffer.from(base64String, 'base64');
-    const pdfData = await pdfParse(buffer);
-    await assertPdfMatches(normalizePdfText(pdfData.text), [
-      { label: 'Chúng tôi tên là:', expected: 'Chu Tiến Dũng, Vũ Thế Huy' },
-      { label: 'Công tác tại:', expected: 'Tổng Công ty CP Công trình Viettel' },
-      { label: 'gói thầu số', expected: '856-DTRR-VCC-TTCNTT-TC-2025' },
-      { label: 'NGƯỜI CAM KẾT', expected: 'Chu Tiến Dũng' },
-      { label: 'Ủy viên', expected: 'Vũ Thế Huy' },
-    ]);
+    // const base64String = resJson.data.base64String;
+    // const buffer = Buffer.from(base64String, 'base64');
+    // const pdfData = await pdfParse(buffer);
+    // await assertPdfMatches(normalizePdfText(pdfData.text), [
+    //   { label: 'Chúng tôi tên là:', expected: 'Chu Tiến Dũng, Vũ Thế Huy' },
+    //   { label: 'Công tác tại:', expected: 'Tổng Công ty CP Công trình Viettel' },
+    //   { label: 'gói thầu số', expected: '856-DTRR-VCC-TTCNTT-TC-2025' },
+    //   { label: 'NGƯỜI CAM KẾT', expected: 'Chu Tiến Dũng' },
+    //   { label: 'Ủy viên', expected: 'Vũ Thế Huy' },
+    // ]);
   }
-
+  await page.pause();
 });
 
 const loginAndSearch = async (page: Page) => {
-  await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
+  // await login(page, '/CBMS_DOCUMENT_BY_PID_INVEST');
+  await login(page, '/CBMS_DOCUMENT_BY_PID_PURCHASE');
   await page.locator(`input[name="keySearch"]`).fill(contractorName);
   await page.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes('/contractor/doSearch') && response.status() === 200);

@@ -36,3 +36,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
     name: 'Lê Đức Mạnh'
   }
 };
+
+export const USER_POLICY = USERS.NHUNG;
+export const USER_TECH = USERS.HONG;
+export const USER_FINANCE = USERS.TUOI;

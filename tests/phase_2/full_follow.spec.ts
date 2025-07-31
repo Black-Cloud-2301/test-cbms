@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
+import {USER_FINANCE, USER_PL, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {fillTextV2, selectFile} from '../../utils/fill.utils';
@@ -112,7 +112,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
 
   if (await subDialog.getByRole('rowgroup').count() < 3) {
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.NHUNG.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_POLICY.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
@@ -124,7 +124,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     await page.getByRole('option', {name: 'Tổ trưởng'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.HONG.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_TECH.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
@@ -135,7 +135,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     await page.getByRole('option', {name: 'Thành viên'}).click();
 
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USERS.CAM_NHUNG.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_FINANCE.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
@@ -299,7 +299,7 @@ export const importDocumentByPidCDT = async (page: Page) => {
 
 export const documentByPidSubmitToAppraiser = async ({page, invest = true, selectContractorForm = SELECT_CONTRACTOR_FORM_TYPE.DTRR}: {
   page: Page,
-  invest: boolean
+  invest?: boolean
   selectContractorForm?: SELECT_CONTRACTOR_FORM_TYPE
 }) => {
   await page.locator(`input[name="keySearch"]`).fill(invest ? getAvailableContractorInvest({

@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {IUser, USERS} from '../../constants/user';
+import {IUser, USER_FINANCE, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
@@ -55,20 +55,26 @@ const loginWithRoleAndSearch = async ({page, user, isNew = false, url = ROUTES.B
 const search = async (page: Page, invest: boolean = true) => {
   const currentContractorName = invest ? getAvailableContractorInvest({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name : getAvailableContractorPurchase({status:CONTRACTOR_STATUS.VERIFIED_DOCUMENT_BY_PID_V1}).name;
   await page.locator(`input[name="keySearch"]`).fill(currentContractorName);
-  await page.getByRole('button', {name: 'Tìm kiếm'}).click();
-  await page.waitForResponse((response) => {
-    const urlMatch = response.url().includes(`${CBMS_MODULE}/contractor/doSearch`);
-    const isOk = response.status() === 200;
+  const [res] = await Promise.all([
+    page.waitForResponse(response => {
+      const urlMatch = response.url().includes(`${CBMS_MODULE}/contractor/doSearch`);
+      const isOk = response.status() === 200;
 
-    if (!urlMatch || !isOk) return false;
+      if (!urlMatch || !isOk) return false;
 
-    const request = response.request();
-    const postData = request.postDataJSON(); // Nếu là JSON
-    // const postData = request.postData();  // Nếu raw string
+      try {
+        const request = response.request();
+        const postData = request.postDataJSON(); // parse JSON
+        return postData?.keySearch === currentContractorName;
+      } catch (e) {
+        return false;
+      }
+    }),
+    page.getByRole('button', { name: 'Tìm kiếm' }).click()
+  ]);
+  const resJson = await res.json();
+  expect(resJson.type).toEqual('SUCCESS');
 
-    // Ví dụ: check field cụ thể trong payload
-    return postData?.keySearch === currentContractorName;
-  });
   await page.waitForTimeout(500);
   await page.getByTitle('Khai báo checklist hồ sơ dự thầu').first().click();
 }
@@ -135,7 +141,7 @@ const saveStepThird = async (page: Page, invest: boolean) => {
 }
 
 const saveStepFourth = async ({page, isNew = false, url, invest = false}: { page: Page, isNew?: boolean, url?: string, invest?:boolean }) => {
-  await loginWithRoleAndSearch({page, user: USERS.HONG, isNew, url, invest});
+  await loginWithRoleAndSearch({page, user: USER_TECH, isNew, url, invest});
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   const tableRow = mainDialog.locator('tbody tr');
   await checkCountBidder(page, 2);
@@ -161,7 +167,8 @@ const saveStepFourth = async ({page, isNew = false, url, invest = false}: { page
 }
 
 const saveStepFifth = async ({page, isNew, url, invest = false}: { page: Page, isNew?: boolean, url?: string, invest?:boolean }) => {
-  await loginWithRoleAndSearch({page, user: USERS.CAM_NHUNG, isNew, url, invest});
+  await loginWithRoleAndSearch({page, user: USER_FINANCE, isNew, url, invest});
+  // await page.pause();
   const mainDialog = page.getByRole('dialog', {name: 'Thông tin hồ sơ dự thầu'});
   const tableRow = mainDialog.locator('tbody tr');
   await checkCountBidder(page, 3);
@@ -288,7 +295,7 @@ export const evaluate = async ({page, url = ROUTES.BID_EVALUATION, invest = true
   await page.waitForTimeout(500);
   await saveForm(page, mainDialog);
 
-  await loginWithRoleAndSearch({page, user: USERS.NHUNG, url, invest});
+  await loginWithRoleAndSearch({page, user: USER_POLICY, url, invest});
   await checkCountBidder(page, 0);
   await mainDialog.getByRole('button', {name: 'Tiếp theo'}).click();
   //   second step
@@ -300,7 +307,6 @@ export const evaluate = async ({page, url = ROUTES.BID_EVALUATION, invest = true
   // STEP 4
   await saveStepFourth({page, url, invest});
 
-  // await page.pause();
   // STEP 5
   await saveStepFifth({page, url, invest});
   // STEP 6

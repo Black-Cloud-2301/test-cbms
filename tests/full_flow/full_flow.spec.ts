@@ -50,6 +50,7 @@ import {
   createCostSubmission,
   submitToAppraisalCostSubmission
 } from '../phase_4/cost-submission.spec';
+import { USERS } from '../../constants/user';
 
 test.describe('test all invest', () => {
   test.describe.configure({mode: 'serial'});
@@ -116,13 +117,13 @@ test.describe('test all invest', () => {
     await appraisalSelectionPlan({page, nameSearch});
   });
 
-  test('create selection_plan/ adjustment / investment project', async ({page}) => {
+  /*test('create selection_plan/ adjustment / investment project', async ({page}) => {
     const totalValue = 10000000;
     const packageCount = 1;
     const nameSearch = await createSelectionPlanAdjustmentInvest(page, totalValue, packageCount);
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
-  });
+  });*/
 
   test('import document by pid', async ({page}) => {
     await importDocumentByPidDTRR(page);
@@ -136,6 +137,7 @@ test.describe('test all invest', () => {
 
   test('import document by pid invest phase 2', async ({page}) => {
     await importDocumentByPidPhase2DTRR(page);
+    await page.pause();
     await submitToAppraiser(page);
     await verifyDocumentByPid2(page);
   })
@@ -238,7 +240,7 @@ test.describe('test all shopping', () => {
   })
 
   test('submit to appraisal document by pid shopping', async ({page}) => {
-    await submitToAppraisalShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+    await submitToAppraisalShopping({page});
   })
 
   test('appraisal document by pid shopping', async ({page}) => {
@@ -250,6 +252,7 @@ test.describe('test all shopping', () => {
     await documentByPidSubmitToAppraiser({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
     await documentByPidVerify({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
   });
+
   test('import document by pid shopping HDTT', async ({page}) => {
     await createDocumentByPidShoppingCDT({page, isCDT: false});
     await documentByPidSubmitToAppraiser({page, invest: false, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.HDTT});

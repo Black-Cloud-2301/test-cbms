@@ -298,7 +298,6 @@ export const importDocumentByPidPhase2DTRR = async (page: Page) => {
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
 
 // save form 11
-  await page.pause()
   currentRow = mainDialog.getByRole('cell', {name: 'Quyết định KQLCNT'}).locator('..');
   await currentRow.getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật quyết định phê duyệt KQLCNT'});
@@ -322,7 +321,7 @@ export const importDocumentByPidPhase2DTRR = async (page: Page) => {
   await currentRow.getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật biên bản hoàn thiện hợp đồng'});
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
-await page.pause();
+
   await saveForm({page, dialog: mainDialog});
 }
 
