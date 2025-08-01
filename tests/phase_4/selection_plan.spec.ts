@@ -7,7 +7,7 @@ import {
   selectAutocompleteMulti,
   selectDate,
   selectFile,
-  selectOption
+  selectOption, selectOptionV2
 } from '../../utils/fill.utils';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../constants/common';
 import {
@@ -827,6 +827,7 @@ export const createSelectionPlanNewPackageInvest = async (page: Page, totalValue
   await page.getByRole('button', {name: 'Thêm mới'}).click();
   const mainDialog = page.getByRole('dialog', {name: 'Tạo mới kế hoạch lựa chọn nhà thầu'});
   await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
+  await selectOptionV2(page, mainDialog, 'Chi tiết nguồn vốn', 'Vốn chủ sở hữu');
   // await selectOption(page, mainDialog, 'inputSource', '1. Dự án đầu tư');
   await fillText(mainDialog, 'contractorSelectionPlanName', nameSearch);
   await selectAutocompleteMulti({

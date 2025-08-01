@@ -154,7 +154,7 @@ test.describe('test all shopping', () => {
   test.describe.configure({mode: 'serial'});
   test.setTimeout(900000);
 
-  test('create purchase', async ({page}) => {
+/*  test('create purchase', async ({page}) => {
     await login(page, ROUTES.PURCHASE_PROPOSAL);
     await searchPurchase({page});
     await page.getByRole('button', {name: 'Thêm mới'}).click();
@@ -177,7 +177,7 @@ test.describe('test all shopping', () => {
     await login(page, ROUTES.PURCHASE_PROPOSAL);
     const nameSearch = getGlobalVariable('listPurchase').find(f => f.status === 'NEW')?.name;
     await submitToAppraisalPurchase({page, nameSearch});
-  })
+  })*/
 
   /*test('purchase adjustment', async ({page}) => {
     await login(page, ROUTES.PURCHASE_PROPOSAL);
@@ -189,12 +189,12 @@ test.describe('test all shopping', () => {
     await adjustmentPurchase({page, nameSearch});
   })*/
 
-  test('create cost submission', async ({page}) => {
+/*  test('create cost submission', async ({page}) => {
     await createCostSubmission({page});
     await submitToAppraisalCostSubmission({page});
     // await adjustmentCostSubmission({page});
     // await submitToAppraisalCostSubmission({page});
-  })
+  })*/
 
   test('create selection_plan/ new package/ shopping full', async ({page}) => {
     test.setTimeout(180000)

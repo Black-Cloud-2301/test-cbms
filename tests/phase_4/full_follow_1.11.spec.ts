@@ -207,7 +207,12 @@ export const updateDocumentByPid = async (page: Page) => {
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   // update dialog 6
-  await page.getByRole('row', {name: 'Hồ sơ mời thầu'}).getByTitle('Cập nhật văn bản').click();
+  await page.getByRole('row', {name: 'Tờ trình hồ sơ mời thầu'}).getByTitle('Cập nhật văn bản').click();
+  subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình hồ sơ mời thầu'});
+  await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+
+  // update dialog 7
+  await page.getByRole('row', {name: 'Hồ sơ mời thầu'}).nth(1).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật hồ sơ mời thầu'});
 
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
