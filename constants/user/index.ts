@@ -7,12 +7,12 @@ export interface IUser {
 export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MANH', IUser> = {
   NHUNG: {
     code: '435319',
-    password: 'Bear199!@#',
+    password: 'Bear200!@#',
     name: 'Giang Thị Nhung'
   },
   PC: {
     code: '270504',
-    password: 'Cntt@1335',
+    password: 'Cntt@1337',
     name: 'Lê Thị Ngọc Ánh'
   },
   HONG: {
@@ -22,7 +22,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   },
   CAM_NHUNG: {
     code: '455651',
-    password: 'Thang5nam25@',
+    password: 'Thang7nam25@',
     name: 'Nguyễn Thị Cẩm Nhung'
   },
   TUOI: {
@@ -37,6 +37,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   }
 };
 
-export const USER_POLICY = USERS.NHUNG;
+export const USER_LEAD = USERS.NHUNG;
+export const USER_POLICY = USERS.CAM_NHUNG;
 export const USER_TECH = USERS.HONG;
 export const USER_FINANCE = USERS.TUOI;

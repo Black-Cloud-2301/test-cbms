@@ -303,6 +303,7 @@ export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch
   await fillText(mainDialog, 'purchaseRequestName', nameSearch);
   await fillText(mainDialog, 'procurementProposalContent', 'Mua cả thế giới');
   await fillNumber(mainDialog, 'propositionPurchasePrice', totalPrice.toString());
+  await page.waitForTimeout(1000);
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillText(mainDialog, 'procurementProposalDocumentNumber', `SO_VB_DXMS_TA_AUTOTEST`);
   await selectDate(page, mainDialog, 'decisionDay');

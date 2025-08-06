@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USER_FINANCE, USER_PL, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
+import {USER_FINANCE, USER_LEAD, USER_PL, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {fillTextV2, selectFile} from '../../utils/fill.utils';
@@ -112,14 +112,12 @@ export const importDocumentByPidDTRR = async (page: Page) => {
 
   if (await subDialog.getByRole('rowgroup').count() < 3) {
     await subDialog.locator('form span').nth(1).click();
-    await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_POLICY.name);
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_LEAD.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
     let row = subDialog.getByRole('rowgroup').locator('tr').nth(1);
-    await row.locator('span#approvalDecisionPlanSelection').click();
-    await page.getByRole('option', {name: 'Pháp lý'}).click();
-    await row.locator('#divisionLabor').fill('Nhận order');
+    await row.locator('#divisionLabor').fill('Ngồi nhìn');
     await row.locator('span#positionId').click();
     await page.getByRole('option', {name: 'Tổ trưởng'}).click();
 
@@ -143,6 +141,17 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     await page.getByRole('option', {name: 'Kinh tế - tài chính'}).click();
     await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('#divisionLabor').fill('Thu tiền');
     await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#positionId').click();
+    await page.getByRole('option', {name: 'Thành viên'}).click();
+
+    await subDialog.locator('form span').nth(1).click();
+    await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_POLICY.name);
+    await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
+    await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
+    await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
+    await subDialog.getByRole('rowgroup').locator('tr').nth(4).locator('span#approvalDecisionPlanSelection').click();
+    await page.getByRole('option', {name: 'Pháp lý'}).click();
+    await subDialog.getByRole('rowgroup').locator('tr').nth(4).locator('#divisionLabor').fill('Nhận order');
+    await subDialog.getByRole('rowgroup').locator('tr').nth(4).locator('span#positionId').click();
     await page.getByRole('option', {name: 'Thành viên'}).click();
   }
 
@@ -220,6 +229,7 @@ export const importDocumentByPidCDT = async (page: Page) => {
   await page.getByRole('row', {name: 'Biên bản thương thảo hợp đồng'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật biên bản thương thảo hợp đồng'});
   await fillTextV2(subDialog, 'paymentTime', 'Mai');
+  await fillTextV2(subDialog, 'deliveryAddress', 'Cầu Giấy');
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
 
   const selectUserDialog = page.getByRole('dialog').filter({
