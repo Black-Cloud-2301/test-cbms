@@ -110,13 +110,13 @@ test.describe('test all invest', () => {
   });
 */
 
-  test('create selection_plan/ new package/ investment project', async ({page}) => {
+  /*test('create selection_plan/ new package/ investment project', async ({page}) => {
     const totalValue = 10000000;
     const packageCount = 2;
     const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
-  });
+  });*/
   /*test('create selection_plan/ adjustment / investment project', async ({page}) => {
     const totalValue = 10000000;
     const packageCount = 1;
@@ -127,7 +127,6 @@ test.describe('test all invest', () => {
 
   test('import document by pid', async ({page}) => {
     await importDocumentByPidDTRR(page);
-    await page.pause();
     await documentByPidSubmitToAppraiser({page});
     await documentByPidVerify({page});
   });

@@ -88,8 +88,8 @@ export const selectOptionV2 = async (page: Page, locator: Locator, labelText: st
   }
 
   // 4️⃣ Chọn option
-  await page.getByRole('option', { name: value, exact: true }).click();
-  await page.waitForSelector('[role="listbox"]', { state: 'detached' });
+  await page.getByRole('option', {name: value, exact: true}).click();
+  await page.waitForSelector('[role="listbox"]', {state: 'detached'});
 }
 
 export const selectDate = async (page: Page, locator: Locator, id: string, value?: string) => {
@@ -110,7 +110,7 @@ export const selectDate = async (page: Page, locator: Locator, id: string, value
   }
 }
 
-export const selectDateV2 = async (page: Page, locator: Locator, labelText: string, value?: string, mode:"date"|"year" = "date", index: number = 0) => {
+export const selectDateV2 = async (page: Page, locator: Locator, labelText: string, value?: string, mode: 'date' | 'year' = 'date', index: number = 0) => {
   const datePicker = locator.locator(`date-picker-v2[ng-reflect-label="${labelText}"]`).nth(index);
   const currentInput = datePicker.locator('input[role="combobox"]');
   // console.log(await currentInput.evaluate(el => el.outerHTML));
@@ -131,7 +131,14 @@ export const selectDateV2 = async (page: Page, locator: Locator, labelText: stri
 }
 
 export const selectFile = async ({
-  page, locator, value, accept, fileType}: { page: Page, locator: Locator; value: string; accept?: string; fileType?: string }) => {
+                                   page, locator, value, accept, fileType
+                                 }: {
+  page: Page,
+  locator: Locator;
+  value: string;
+  accept?: string;
+  fileType?: string
+}) => {
   if (accept) {
     await locator.locator(`input[type="file"][accept*='${accept}']`).first().setInputFiles(value);
   } else
@@ -146,7 +153,7 @@ export const selectFile = async ({
 }
 
 export const selectAutocompleteMulti = async (
-  {page, locator, title, dialogTitle, value, api, multiple = false}:{
+  {page, locator, title, dialogTitle, value, api, multiple = false}: {
     page: Page,
     locator: Locator,
     title: string,
@@ -160,14 +167,45 @@ export const selectAutocompleteMulti = async (
   await dialog.locator(`input[name=keySearch]`).fill(value);
   await dialog.getByRole('button', {name: 'Tìm kiếm'}).click();
   await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}${api}`) && response.status() === 200);
-  if(multiple) {
+  if (multiple) {
     let tableRow = dialog.locator('tbody tr');
     let rowCount = await tableRow.count();
     expect(rowCount > 0);
     const row = tableRow.first();
     await row.locator('p-tablecheckbox').click();
-    await dialog.getByRole('button',{name:'Ghi lại'}).click();
+    await dialog.getByRole('button', {name: 'Ghi lại'}).click();
   } else {
     await dialog.getByRole('row').nth(1).locator('a').click();
   }
+}
+export const selectMultiple = async ({page, locator, labelText, value, index = 0}:{
+                                       page: Page,
+                                       locator: Locator,
+                                       labelText: string,
+                                       value: string[],
+                                       index?: number
+                                     }) => {
+  const multiselect = locator
+    .locator(`label:has-text("${labelText}")`)
+    .locator('xpath=following-sibling::div//p-multiselect');
+
+  await expect(multiselect).toBeVisible();
+
+  // 2️⃣ Mở dropdown
+  await multiselect.click();
+  await page.waitForSelector('[role="listbox"]', {state: 'visible'});
+
+  // 3️⃣ (tùy) gõ vào searchbox
+  for (const item of value) {
+    const searchBox = page.locator('.p-dropdown-panel').getByRole('searchbox');
+    if (await searchBox.count()) {
+      await searchBox.fill(item);
+    }
+
+    // 4️⃣ Chọn option
+    await page.getByRole('option', {name: item, exact: true}).click();
+  }
+
+  await multiselect.click();
+  // await page.waitForSelector('[role="listbox"]', {state: 'detached'});
 }

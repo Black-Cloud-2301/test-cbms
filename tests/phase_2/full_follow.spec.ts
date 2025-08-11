@@ -109,14 +109,15 @@ export const importDocumentByPidDTRR = async (page: Page) => {
   const selectExpertDialog = page.getByRole('dialog').filter({
     has: page.locator('span.p-dialog-title:text("Tìm kiếm chuyên gia")')
   });
+  const tableRow = subDialog.locator('app-form-table[title="Danh sách tổ chuyên gia"] table tbody tr');
 
-  if (await subDialog.getByRole('rowgroup').count() < 3) {
+  if (await tableRow.count() < 3) {
     await subDialog.locator('form span').nth(1).click();
     await selectExpertDialog.locator('input[name="keySearch"]').fill(USER_LEAD.name);
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
-    let row = subDialog.getByRole('rowgroup').locator('tr').nth(1);
+    let row = tableRow.first();
     await row.locator('#divisionLabor').fill('Ngồi nhìn');
     await row.locator('span#positionId').click();
     await page.getByRole('option', {name: 'Tổ trưởng'}).click();
@@ -126,10 +127,10 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('span#approvalDecisionPlanSelection').click();
+    await tableRow.nth(1).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Kỹ thuật - công nghệ'}).click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('#divisionLabor').fill('Làm bánh mỳ');
-    await subDialog.getByRole('rowgroup').locator('tr').nth(2).locator('span#positionId').click();
+    await tableRow.nth(1).locator('#divisionLabor').fill('Làm bánh mỳ');
+    await tableRow.nth(1).locator('span#positionId').click();
     await page.getByRole('option', {name: 'Thành viên'}).click();
 
     await subDialog.locator('form span').nth(1).click();
@@ -137,10 +138,10 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#approvalDecisionPlanSelection').click();
+    await tableRow.nth(2).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Kinh tế - tài chính'}).click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('#divisionLabor').fill('Thu tiền');
-    await subDialog.getByRole('rowgroup').locator('tr').nth(3).locator('span#positionId').click();
+    await tableRow.nth(2).locator('#divisionLabor').fill('Thu tiền');
+    await tableRow.nth(2).locator('span#positionId').click();
     await page.getByRole('option', {name: 'Thành viên'}).click();
 
     await subDialog.locator('form span').nth(1).click();
@@ -148,10 +149,10 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     await selectExpertDialog.getByRole('button', {name: 'Tìm kiếm'}).click();
     await page.waitForResponse(response => response.url().includes(`${CBMS_MODULE}/expertGroup/doSearch`) && response.status() === 200);
     await selectExpertDialog.getByRole('row').nth(1).locator('a').click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(4).locator('span#approvalDecisionPlanSelection').click();
+    await tableRow.nth(3).locator('span#approvalDecisionPlanSelection').click();
     await page.getByRole('option', {name: 'Pháp lý'}).click();
-    await subDialog.getByRole('rowgroup').locator('tr').nth(4).locator('#divisionLabor').fill('Nhận order');
-    await subDialog.getByRole('rowgroup').locator('tr').nth(4).locator('span#positionId').click();
+    await tableRow.nth(3).locator('#divisionLabor').fill('Nhận order');
+    await tableRow.nth(3).locator('span#positionId').click();
     await page.getByRole('option', {name: 'Thành viên'}).click();
   }
 

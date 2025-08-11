@@ -6,7 +6,7 @@ import {
   fillText,
   selectAutocompleteMulti,
   selectDate,
-  selectFile,
+  selectFile, selectMultiple,
   selectOption, selectOptionV2
 } from '../../utils/fill.utils';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../constants/common';
@@ -861,6 +861,15 @@ export const createSelectionPlanNewPackageInvest = async (page: Page, totalValue
     value: 'assets/files/sample-2.pdf',
     fileType: 'Quyết định phê duyệt KHLCNT'
   });
+
+  await page.pause();
+  await selectMultiple({
+    page,
+    locator: mainDialog,
+    labelText: 'Mục đích sử dụng',
+    value: ['Giải pháp và dịch vụ kỹ thuật', 'Vận hành khai thác', 'Xây dựng dân dụng']
+  })
+
 
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   // await page.pause();

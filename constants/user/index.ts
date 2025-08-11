@@ -32,7 +32,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   },
   MANH: {
     code: '467607',
-    password: 'Hongbt8cons@',
+    password: 'Hoangnm36cons@',
     name: 'Lê Đức Mạnh'
   }
 };
