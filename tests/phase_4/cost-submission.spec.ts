@@ -2,7 +2,7 @@ import {expect, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
 import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../constants/common';
 import {buildNextName, bumpMainSerial, getGlobalVariable, setGlobalVariable} from '../../utils';
-import {fillNumber, fillText, selectAutocompleteMulti} from '../../utils/fill.utils';
+import {fillNumber, fillText, fillTextV2, selectAutocompleteMulti} from '../../utils/fill.utils';
 import {USERS} from '../../constants/user';
 import {IAppParam, SaveFormOptions} from '../../constants/interface';
 import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
@@ -88,9 +88,10 @@ export const createCostSubmission = async ({page}: {
   await fillText(mainDialog, 'costSubmissionContent', 'Mua nguyên liệu bán bánh mỳ');
   const costSubmissionPrice = 69850000;
   await fillNumber(mainDialog, 'costSubmissionPrice', costSubmissionPrice.toString());
+  await fillTextV2(mainDialog, 'quotationReference', "TKBG-01")
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
-  await page.getByRole('button', {name: 'Tải lên'}).click();
+  // await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+  // await page.getByRole('button', {name: 'Tải lên'}).click();
 
   const selectEmployeeDialog = page.getByRole('dialog').filter({
     has: page.locator('span.p-dialog-title:text("Tìm kiếm thông tin nhân sự")')
@@ -137,7 +138,7 @@ export const createCostSubmission = async ({page}: {
 
   await saveForm({page, dialog: mainDialog});
   const listCostSubmission = getGlobalVariable('listCostSubmission');
-  setGlobalVariable('listCostSubmission', [...listCostSubmission, {name: nameSearch, status: CONTRACTOR_STATUS.NEW, totalValue: costSubmissionPrice}])
+  setGlobalVariable('listCostSubmission', [{name: nameSearch, status: CONTRACTOR_STATUS.NEW, totalValue: costSubmissionPrice}, ...listCostSubmission])
   const listPurchase = getGlobalVariable('listPurchase');
   const updatedPurchaseList = listPurchase.map(p=>{
     if(p.status === CONTRACTOR_STATUS.APPRAISED && p.name === purchaseName){

@@ -7,7 +7,7 @@ import {
   fillTextV2,
   selectDate,
   selectDateV2,
-  selectFile,
+  selectFile, selectMultiple,
   selectOptionV2
 } from '../../utils/fill.utils';
 import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
@@ -373,6 +373,12 @@ export const createPolicy = async (page: Page, mainDialog: Locator, nameSearch: 
   await fillNumber(mainDialog, 'totalInvestment', '100000000');
   await fillTextV2(mainDialog, 'projectLocation', 'Hồ Tây');
   await fillTextV2(mainDialog, 'note', 'Của Tú Ank đừng đụng zô');
+  await selectMultiple({
+    page,
+    locator: mainDialog,
+    labelText: 'Mục đích sử dụng',
+    value: ['Giải pháp và dịch vụ kỹ thuật', 'Vận hành khai thác', 'Xây dựng dân dụng']
+  })
   await fillEditor(mainDialog, 'investmentTarget', 'Đầu tư cho vui');
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   await fillTextV2(mainDialog, 'decisionNumber', `QD_CT_TA_AUTOTEST`);

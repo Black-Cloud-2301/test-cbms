@@ -3,7 +3,7 @@ import {login} from '../login';
 import pdfParse from 'pdf-parse';
 import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
 
-const contractorName = 'TA autotest 29';
+const contractorName = 'TA autotest 31';
 
 test('view pdf', async ({ page }) => {
   test.setTimeout(120000);

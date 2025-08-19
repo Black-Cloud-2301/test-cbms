@@ -479,7 +479,7 @@ export const searchSelectionPlan = async ({page, nameSearch, url = '/contractor-
 }
 
 export const createSelectionPlanNewPackageShopping = async (page, mainDialog: Locator, nameSearch?: string) => {
-  const totalValue = 10000000;
+  const totalValue = 139700000;
   const packageCount = 4;
 
   await selectOption(page, mainDialog, 'purpose', '2. Tạo mới gói thầu');
@@ -511,11 +511,16 @@ export const createSelectionPlanNewPackageShopping = async (page, mainDialog: Lo
   const row = tableRow.nth(i);
   await fillNumber(row, 'propositionPurchasePriceUse', '10000000');
 }*/
-  await fillNumber(mainDialog, 'totalValue', '' + totalValue);
+  // await fillNumber(mainDialog, 'totalValue', '' + totalValue);
   await fillNumber(mainDialog, 'packageCount', '' + packageCount);
   await fillText(mainDialog, 'decisionNumber', `SO_QD_BH_KHLCNT_TA_AUTOTEST_MUA_SAM`);
   await selectDate(page, mainDialog, 'decisionApprovalDate');
-  await page.pause()
+  await selectMultiple({
+    page,
+    locator: mainDialog,
+    labelText: 'Mục đích sử dụng',
+    value: ['Giải pháp và dịch vụ kỹ thuật', 'Vận hành khai thác', 'Xây dựng dân dụng']
+  })
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
   // await page.pause();
   await createContractor({
@@ -862,18 +867,9 @@ export const createSelectionPlanNewPackageInvest = async (page: Page, totalValue
     fileType: 'Quyết định phê duyệt KHLCNT'
   });
 
-  await page.pause();
-  await selectMultiple({
-    page,
-    locator: mainDialog,
-    labelText: 'Mục đích sử dụng',
-    value: ['Giải pháp và dịch vụ kỹ thuật', 'Vận hành khai thác', 'Xây dựng dân dụng']
-  })
-
-
   await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-  // await page.pause();
   await createContractor({page, mainDialog, totalValue, contractorSelectionPlanName: nameSearch, packageCount});
+  await page.pause();
   await saveForm({page, dialog: mainDialog});
   return nameSearch;
 }

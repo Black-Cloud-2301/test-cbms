@@ -1,0 +1,81 @@
+{
+  "policyName": "TA autotest chủ trương",
+  "projectName": "TA autotest dự án",
+  "lastPolicyName": "TA autotest chủ trương 43",
+  "purchaseName": "TA autotest đề xuất mua sắm",
+  "contractorPlanName": "TA autotest kế hoạch lựa chọn nhà thầu",
+  "lastProjectName": "TA autotest dự án 26",
+  "lastPurchaseName": "TA autotest đề xuất mua sắm 41",
+  "selectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu",
+  "lastSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 35",
+  "lastContractorName": "TA autotest 6",
+  "listContractorInvest": [
+    {
+      "name": "TA autotest 2",
+      "totalValue": 5000000,
+      "status": "VERIFIED_DOCUMENT_BY_PID_V1",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 35",
+      "selectContractorForm": "CDT"
+    },
+    {
+      "name": "TA autotest 1",
+      "totalValue": 5000000,
+      "status": "EVALUATED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 35",
+      "selectContractorForm": "DTRR"
+    }
+  ],
+  "listContractorPurchase": [
+    {
+      "name": "TA autotest 6",
+      "totalValue": 4000000,
+      "status": "APPRAISED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 20 mua sắm 9",
+      "selectContractorForm": "KHTGT"
+    },
+    {
+      "name": "TA autotest 5",
+      "totalValue": 2000000,
+      "status": "APPRAISED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 20 mua sắm 9",
+      "selectContractorForm": "HDTT"
+    },
+    {
+      "name": "TA autotest 4",
+      "totalValue": 2000000,
+      "status": "APPRAISED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 20 mua sắm 9",
+      "selectContractorForm": "CDT"
+    },
+    {
+      "name": "TA autotest 3",
+      "totalValue": 2000000,
+      "status": "APPRAISED",
+      "contractorSelectionPlanName": "TA autotest kế hoạch lựa chọn nhà thầu 20 mua sắm 9",
+      "selectContractorForm": "DTRR"
+    }
+  ],
+  "lastCostSubmissionName": "",
+  "currentCostSubmissionName": "TA autotest tờ trình dự toán 1",
+  "listPurchase": [
+    {
+      "name": "Đầu tư mua sắm thiết bị CNTT phục vụ triển khai hạ tầng mạng của TCT năm 2026",
+      "totalPrice": 69850000,
+      "status": "APPRAISED",
+      "costSubmissionName": "TA autotest tờ trình dự toán 1"
+    },
+    {
+      "name": "TA autotest đề xuất mua sắm 40",
+      "totalPrice": 69850000,
+      "status": "APPRAISED",
+      "costSubmissionName": null
+    }
+  ],
+  "listCostSubmission": [
+    {
+      "name": "TA autotest tờ trình dự toán 1",
+      "status": "APPRAISED",
+      "totalValue": 69850000
+    }
+  ]
+}

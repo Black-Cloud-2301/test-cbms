@@ -13,7 +13,7 @@ export const login = async (page: Page, url?: string, user: IUser = USERS.NHUNG)
     await page.waitForTimeout(2000);
     if (page.url().startsWith(URL_BASE)) {
       await page.waitForSelector('p-treenode', {state: 'visible'});
-      await page.waitForTimeout(2000);
+      // await page.waitForTimeout(2000);
       await page.locator('.header-avatar').click();
       const personalPage = page.locator('.darkened-content');
       const personalContent = personalPage.locator('.personal-content-page');
@@ -33,7 +33,7 @@ export const login = async (page: Page, url?: string, user: IUser = USERS.NHUNG)
     }
     await page.waitForSelector('p-treenode', {state: 'visible'});
 
-    await checkUserLoad(page, user);
+    // await checkUserLoad(page, user);
     if (url)
       await page.goto(url);
   }

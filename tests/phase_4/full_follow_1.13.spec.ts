@@ -5,6 +5,7 @@ import {getGlobalVariable} from '../../utils';
 import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
+import {fillTextV2} from '../../utils/fill.utils';
 
 
 test.describe('test document-by-pid shopping ver 2', () => {
@@ -222,10 +223,14 @@ const loginAndSearch = async ({page, url}: { page: Page, url?: string }) => {
 }
 
 const checkSuccess = async (page: Page, url: string = '**/document-by-pid/import', successText: string = 'Import dữ liệu thành công') => {
-  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
   let resPromise = await page.waitForResponse(url);
   let resJson = await resPromise.json()
   expect(resJson.type).toEqual('SUCCESS');
+  await checkImportToastSuccess({page, successText})
+}
+
+export const checkImportToastSuccess = async ({page, successText = 'Import thành công'}: { page: Page, successText?: string }) => {
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
   await expect(alertSuccess.locator('.p-toast-detail')).toHaveText(successText);
   await alertSuccess.locator('.p-toast-icon-close').click();
 }
@@ -238,9 +243,15 @@ export const createDocumentByBidShoppingPhase2 = async ({page, url = '/CBMS_DOCU
   const mainDialog = page.getByRole('dialog', {name: 'Cập nhật danh mục văn bản pháp lý'});
 
   // upload file mailing
-  await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bm_DTRR_DADT_phase_2.xlsx');
+  await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bm_DTRR_MSTX_phase_2.xlsx');
   await mainDialog.getByRole('button', {name: 'Tải lên'}).click();
-
+  let resPromise = await page.waitForResponse(`**${CBMS_MODULE}/document-by-pid/import`);
+  let resJson = await resPromise.json();
+  const alertSuccess = page.locator('[role="alert"].p-toast-message-success');
+  expect(resJson.type).toEqual('SUCCESS');
+  await expect(alertSuccess.locator('.p-toast-detail')).toHaveText('Import dữ liệu thành công');
+  await alertSuccess.locator('.p-toast-icon-close').click();
+  await page.waitForTimeout(500);
   // VB 1
   let currentRow = mainDialog.getByRole('cell', {name: 'Báo cáo đánh giá hồ sơ dự thầu'}).locator('..');
   await currentRow.getByTitle('Cập nhật văn bản').click();
@@ -329,10 +340,15 @@ export const createDocumentByBidShoppingPhase2 = async ({page, url = '/CBMS_DOCU
   await currentRow.getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật thông báo KQLCNT'});
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
+  await page.pause();
   await saveForm({page, dialog: mainDialog});
 }
 
-export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, isCDT = true}: { page: Page, isCDT?: boolean, user?:IUser }) => {
+export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, isCDT = true}: {
+  page: Page,
+  isCDT?: boolean,
+  user?: IUser
+}) => {
   await login(page, '/CBMS_DOCUMENT_BY_PID_PURCHASE', user);
   await page.locator(`input[name="keySearch"]`).fill(getAvailableContractorPurchase({
     status: CONTRACTOR_STATUS.APPRAISED,
@@ -357,6 +373,8 @@ export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, 
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
   await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
   await subDialog.getByRole('button', {name: 'Tải lên'}).click();
+  await checkImportToastSuccess({page})
+
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   // BM3
@@ -405,6 +423,7 @@ export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, 
   subDialog = page.getByRole('dialog').filter({
     has: page.locator('span.p-dialog-title:text("Cập nhật biên bản thương thảo hợp đồng")')
   });
+  await fillTextV2(subDialog, 'deliveryAddress', 'Cầu Giấy');
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
   tableRow = subDialog.locator('app-form-table[title="Danh sách tham gia đàm phán hợp đồng"] table tbody tr');
   const selectUserDialog = page.getByRole('dialog').filter({
@@ -457,6 +476,11 @@ export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, 
     await row.locator('span#role').click();
     await page.getByRole('option', {name: 'Phòng mua sắm'}).click();
   }
+
+  await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_tieu_chuan_ky_thuat.xlsx');
+  await subDialog.getByRole('button', {name: 'Tải lên'}).click();
+  await checkImportToastSuccess({page, successText: "Import thành công"})
+
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
 
   // BM7
@@ -502,7 +526,13 @@ export const submitToAppraisalShopping = async ({page, url = ROUTES.DOCUMENT_BY_
   await page.getByRole('button', {name: 'Trình thẩm định'}).click();
   const confirmDialog = page.getByRole('alertdialog', {name: 'Xác nhận trình thẩm định'});
   await page.pause();
-  await saveForm({page, dialog: confirmDialog, url:'**/document-by-pid/submitToAppraiser', buttonName: 'Có', successText: 'Trình thẩm định thành công'});
+  await saveForm({
+    page,
+    dialog: confirmDialog,
+    url: '**/document-by-pid/submitToAppraiser',
+    buttonName: 'Có',
+    successText: 'Trình thẩm định thành công'
+  });
 }
 
 

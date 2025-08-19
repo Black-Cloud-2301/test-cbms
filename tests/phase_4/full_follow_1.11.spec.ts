@@ -4,7 +4,7 @@ import {USER_FINANCE, USER_LEAD, USER_POLICY, USER_TECH, USERS} from '../../cons
 import {CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, setGlobalVariable} from '../../utils';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
-import {fillText} from '../../utils/fill.utils';
+import {fillText, fillTextV2} from '../../utils/fill.utils';
 
 test.describe('test document-by-pid ver .11', () => {
   test.describe.configure({mode: 'serial'});
@@ -227,6 +227,11 @@ export const updateDocumentByPid = async (page: Page) => {
   // update dialog 7
   await page.getByRole('row', {name: 'Hồ sơ mời thầu'}).nth(1).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật hồ sơ mời thầu'});
+
+  await fillTextV2(subDialog, 'deliveryAddress', 'Cầu Giấy');
+  await subDialog.getByRole('button', {name: 'Tiếp'}).click();
+  await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_yeu_cau_ky_thuat.xlsx');
+  await subDialog.getByRole('button', {name: 'Tải lên'}).click();
 
   await subDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await page.pause();

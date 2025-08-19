@@ -3,8 +3,9 @@ import {login, loginWithRole} from '../login';
 import {USER_FINANCE, USER_LEAD, USER_PL, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
-import {fillTextV2, selectFile} from '../../utils/fill.utils';
+import {fillText, fillTextV2, selectFile} from '../../utils/fill.utils';
 import {getAvailableContractorPurchase} from '../phase_4/selection_plan.spec';
+import {checkImportToastSuccess} from '../phase_4/full_follow_1.13.spec';
 
 
 test('import document by pid', async ({page}) => {
@@ -169,6 +170,7 @@ export const importDocumentByPidDTRR = async (page: Page) => {
   // update dialog 4
   await page.getByRole('row', {name: 'Tờ trình phê duyệt E-HSMT'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt E-HSMT'});
+  // await fillText(subDialog, 'paymentTerms', "+ Điều kiện 1.\n+ Điều kiện 2.")
   // const datePickerCalendar = page.locator('[role="grid"].p-datepicker-calendar');
   // await datePickerCalendar.locator('span.p-highlight').first().click();
   await saveForm(page, subDialog);
@@ -223,7 +225,7 @@ export const importDocumentByPidCDT = async (page: Page) => {
   await page.getByRole('button', {name: 'Tiếp'}).click();
   await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_hang_hoa.xlsx');
   await subDialog.getByRole('button', {name: 'Tải lên'}).click();
-
+  await checkImportToastSuccess({page});
   await saveForm(page, subDialog);
 
   // update dialog 2
@@ -285,14 +287,17 @@ export const importDocumentByPidCDT = async (page: Page) => {
     await page.getByRole('option', {name: 'Phòng mua sắm'}).click();
   }
 
+  await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_tieu_chuan_ky_thuat.xlsx');
+  await subDialog.getByRole('button', {name: 'Tải lên'}).click();
+
   await saveForm(page, subDialog);
 
   // update dialog 3
   await page.getByRole('row', {name: 'Tờ trình phê duyệt kết quả thương thảo'}).getByTitle('Cập nhật văn bản').click();
   subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt kết quả thương thảo'});
-  await fillTextV2(subDialog, 'paymentTerms', 'Giàu có');
   await fillTextV2(subDialog, 'performanceGuarantee', 'Bảo lãnh luôn');
   await fillTextV2(subDialog, 'warrantyGuarantee', 'Thì bảo lãnh');
+  await fillText(subDialog, 'paymentTerms', '+ Điều kiện 1\n+ Điều kiện 2');
 
   await saveForm(page, subDialog);
 
@@ -302,8 +307,10 @@ export const importDocumentByPidCDT = async (page: Page) => {
   await subDialog.getByRole('button', {name: 'Tiếp'}).click();
   await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_danh_muc_hang_hoa.xlsx');
   await subDialog.getByRole('button', {name: 'Tải lên'}).click();
+  await checkImportToastSuccess({page});
   await saveForm(page, subDialog);
 
+  await page.pause();
   await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
   await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
 }

@@ -56,7 +56,7 @@ test.describe('test all invest', () => {
   test.describe.configure({mode: 'serial'});
   test.setTimeout(900000);
 
-  /*test('create policy full flow', async ({page}) => {
+  test('create policy full flow', async ({page}) => {
     test.setTimeout(180000);
     await login(page, '/BIDDING_POLICY_NEW');
     await searchPolicy({page});
@@ -108,15 +108,14 @@ test.describe('test all invest', () => {
     // await submitToAppraisalProject({page, nameSearch: nameSearch + ` DC 1`});
     // await appraisalProject({page, nameSearch: nameSearch + ` DC 1`});
   });
-*/
 
-  /*test('create selection_plan/ new package/ investment project', async ({page}) => {
+  test('create selection_plan/ new package/ investment project', async ({page}) => {
     const totalValue = 10000000;
     const packageCount = 2;
     const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
     await submitToAppraiserSelectionPlan({page, nameSearch});
     await appraisalSelectionPlan({page, nameSearch});
-  });*/
+  });
   /*test('create selection_plan/ adjustment / investment project', async ({page}) => {
     const totalValue = 10000000;
     const packageCount = 1;
@@ -137,7 +136,6 @@ test.describe('test all invest', () => {
 
   test('import document by pid invest phase 2', async ({page}) => {
     await importDocumentByPidPhase2DTRR(page);
-    await page.pause();
     await submitToAppraiser(page);
     await verifyDocumentByPid2(page);
   })
@@ -175,7 +173,6 @@ test.describe('test all shopping', () => {
     await submitToAppraisalPurchase({page, nameSearch});
   });
 
-
 /*  test('purchase adjustment', async ({page}) => {
     await login(page, ROUTES.PURCHASE_PROPOSAL);
     const nameSearch = getGlobalVariable('lastPurchaseName');
@@ -210,7 +207,6 @@ test.describe('test all shopping', () => {
       const oldName = await row.locator('td').nth(4).innerText();
       nameSearch = bumpMainSerial(oldName);
     }
-
     await createSelectionPlanNewPackageShopping(page, mainDialog, nameSearch);
     await appraiserSelectionPlanShopping({page, nameSearch});
   });
@@ -232,7 +228,6 @@ test.describe('test all shopping', () => {
 
   test('import document by pid shopping phase 2', async ({page}) => {
     await createDocumentByBidShoppingPhase2({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
-    await page.pause();
     await submitToAppraisalShopping({page});
     await appraisalDocumentByPidShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
   })
