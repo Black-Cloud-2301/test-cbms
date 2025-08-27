@@ -178,6 +178,7 @@ export const selectAutocompleteMulti = async (
     await dialog.getByRole('row').nth(1).locator('a').click();
   }
 }
+
 export const selectMultiple = async ({page, locator, labelText, value, index = 0}:{
                                        page: Page,
                                        locator: Locator,
@@ -203,6 +204,7 @@ export const selectMultiple = async ({page, locator, labelText, value, index = 0
     }
 
     // 4️⃣ Chọn option
+    await page.waitForTimeout(200);
     await page.getByRole('option', {name: item, exact: true}).click();
   }
 

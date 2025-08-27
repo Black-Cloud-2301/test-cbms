@@ -14,6 +14,7 @@ import {IAppParam} from '../../constants/interface';
 import {APP_PARAMS} from '../../constants/common/app-param.constants';
 import {saveFileParam, setupAppParams} from '../../utils/params.utils';
 import {validatePurchaseTable} from '../../constants/validate-table/policy.constants';
+import {checkImportToastSuccess} from "./full_follow_1.13.spec";
 
 const PURCHASE_NAME = `TA autotest đề xuất mua sắm`;
 
@@ -311,15 +312,16 @@ export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch
   await selectFile({page,locator: mainDialog, value: 'assets/files/sample.pdf', fileType: 'Tờ trình/đề xuất được phê duyệt'});
   await mainDialog.locator('input[type="file"][accept=".xls, .xlsx"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
   await page.getByRole('button', {name: 'Tải lên'}).click();
+  await checkImportToastSuccess({page});
   await saveForm({page, dialog: mainDialog});
 
   const listPurchase = getGlobalVariable('listPurchase');
-  setGlobalVariable('listPurchase', [...listPurchase, {
+  setGlobalVariable('listPurchase', [{
     name: nameSearch,
     totalPrice,
     status: CONTRACTOR_STATUS.NEW,
     costSubmissionName: null
-  }]);
+  }, ...listPurchase]);
 }
 
 export const submitToAppraisalPurchase = async ({page, nameSearch}: {

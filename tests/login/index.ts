@@ -36,6 +36,8 @@ export const login = async (page: Page, url?: string, user: IUser = USERS.NHUNG)
     // await checkUserLoad(page, user);
     if (url)
       await page.goto(url);
+  } else {
+      await loginWithRole(page, user, url);
   }
 }
 

@@ -27,7 +27,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   },
   TUOI: {
     code: '293289',
-    password: 'Vcc@2023',
+    password: 'Vcc@2000',
     name: 'Tô Thị Thúy Tươi'
   },
   MANH: {
