@@ -102,7 +102,6 @@ test.describe('test all invest', () => {
 
         await page.getByRole('button', {name: 'Thêm mới'}).click();
         await createProject(page, mainDialog, nameSearch);
-        await page.pause();
         await submitToAppraisalProject({page, nameSearch});
         await appraisalProject({page, nameSearch});
         // await adjustmentProject({page, nameSearch});
@@ -114,6 +113,7 @@ test.describe('test all invest', () => {
         const totalValue = 10000000;
         const packageCount = 2;
         const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
+        await page.pause();
         await submitToAppraiserSelectionPlan({page, nameSearch});
         await appraisalSelectionPlan({page, nameSearch});
     });
@@ -137,6 +137,7 @@ test.describe('test all invest', () => {
 
     test('import document by pid invest phase 2', async ({page}) => {
         await importDocumentByPidPhase2DTRR(page);
+        await page.pause();
         await submitToAppraiser(page);
         await verifyDocumentByPid2(page);
     })

@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USER_FINANCE, USER_LEAD, USER_PL, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
+import {USER_FINANCE, USER_LEAD, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
 import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
 import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
 import {fillText, fillTextV2, selectFile} from '../../utils/fill.utils';
@@ -192,7 +192,6 @@ export const importDocumentByPidDTRR = async (page: Page) => {
     // await datePickerCalendar.locator('td.p-datepicker-today').first().click();
 
     await saveForm(page, subDialog);
-    await page.pause();
     await mainDialog.getByRole('button', {name: 'Ghi lại'}).click();
     await checkSuccess(page, `**${CBMS_MODULE}/document-by-pid/save`, 'Cập nhật bản ghi thành công');
 }
@@ -299,6 +298,9 @@ export const importDocumentByPidCDT = async (page: Page) => {
     await fillTextV2(subDialog, 'performanceGuarantee', 'Bảo lãnh luôn');
     await fillTextV2(subDialog, 'warrantyGuarantee', 'Thì bảo lãnh');
     await fillText(subDialog, 'paymentTerms', '+ Điều kiện 1\n+ Điều kiện 2');
+    await fillText(subDialog, 'qualityAssuranceTerms', '+ Điều khoản quy định để đảm bảo chất lượng 1\n+ Điều khoản quy định để đảm bảo chất lượng 2');
+    await fillText(subDialog, 'lateDeliveryPenaltyTerms', '+ Phạt giao hàng chậm 1\n+ Phạt giao hàng chậm 2');
+    await fillText(subDialog, 'contractTerminationTerms', '+ Hủy hợp đồng 1\n+ Hủy hợp đồng 2');
 
     await saveForm(page, subDialog);
 

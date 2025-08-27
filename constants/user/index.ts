@@ -17,7 +17,7 @@ export const USERS: Record<'NHUNG' | 'PC' | 'HONG' | 'TUOI' | 'CAM_NHUNG' | 'MAN
   },
   HONG: {
     code: '192981',
-    password: 'Hoanganh2025a@*HH',
+    password: 'Combun2017a@*HH',
     name: 'Bùi Thị Hồng'
   },
   CAM_NHUNG: {

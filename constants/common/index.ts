@@ -3,8 +3,8 @@ import {getGlobalVariable} from '../../utils';
 
 export const CBMS_MODULE = '';
 export const CONTRACTOR_NAME_SEARCH = 'TA autotest 21';
-// export const URL_BASE = 'http://localhost:8080';
-export const URL_BASE = 'http://10.248.243.138:8080';
+export const URL_BASE = 'http://localhost:8080';
+// export const URL_BASE = 'http://10.248.243.138:8080';
 export const URL_BE_BASE = 'http://localhost:8102';
 // export const URL = 'https://cscm.congtrinhviettel.com.vn';
 export const ROUTES = {
