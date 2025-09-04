@@ -1,11 +1,11 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login} from '../login';
-import {IUser, USERS} from '../../constants/user';
-import {getGlobalVariable} from '../../utils';
-import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
+import {IUser, USERS} from '../../../constants/user';
+import {getGlobalVariable} from '../../../utils';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../../constants/common';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
-import {fillTextV2} from '../../utils/fill.utils';
+import {fillTextV2} from '../../../utils/fill.utils';
 
 
 test.describe('test document-by-pid shopping ver 2', () => {
@@ -378,7 +378,7 @@ export const createDocumentByPidShoppingCDT = async ({page, user = USERS.NHUNG, 
         has: page.locator('span.p-dialog-title:text("Cập nhật tờ trình phê duyệt KHLCNT")')
     });
     await subDialog.getByRole('button', {name: 'Tiếp'}).click();
-    await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+    await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_hang_hoa_mua_sam.xlsx');
     await subDialog.getByRole('button', {name: 'Tải lên'}).click();
     await checkImportToastSuccess({page})
 

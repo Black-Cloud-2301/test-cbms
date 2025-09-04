@@ -1,15 +1,15 @@
 import {expect, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../constants/common';
-import {buildNextName, bumpMainSerial, getGlobalVariable, setGlobalVariable} from '../../utils';
-import {fillNumber, fillText, fillTextV2, selectAutocompleteMulti} from '../../utils/fill.utils';
-import {USERS} from '../../constants/user';
-import {IAppParam, SaveFormOptions} from '../../constants/interface';
-import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
-import {testPageable} from '../../component';
-import {APP_PARAMS} from '../../constants/common/app-param.constants';
-import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {validateProjectTable} from '../../constants/validate-table/policy.constants';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../../constants/common';
+import {buildNextName, bumpMainSerial, getGlobalVariable, setGlobalVariable} from '../../../utils';
+import {fillNumber, fillText, fillTextV2, selectAutocompleteMulti} from '../../../utils/fill.utils';
+import {USERS} from '../../../constants/user';
+import {IAppParam, SaveFormOptions} from '../../../constants/interface';
+import {checkSearchResponse, validateDataTable} from '../../../utils/validate.utils';
+import {testPageable} from '../../../component';
+import {APP_PARAMS} from '../../../constants/common/app-param.constants';
+import {saveFileParam, setupAppParams} from '../../../utils/params.utils';
+import {validateProjectTable} from '../../../constants/validate-table/policy.constants';
 import {getAvailablePurchase} from './purchase.spec';
 
 const COST_SUBMISSION_NAME = `TA autotest tờ trình dự toán`;
@@ -91,7 +91,7 @@ export const createCostSubmission = async ({page, isTCT = true}: {
     await fillNumber(mainDialog, 'costSubmissionPrice', costSubmissionPrice.toString());
     await fillTextV2(mainDialog, 'quotationReference', "TKBG-01")
     await mainDialog.getByRole('button', {name: 'Tiếp'}).click();
-    // await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+    // await mainDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_hang_hoa_mua_sam.xlsx');
     // await page.getByRole('button', {name: 'Tải lên'}).click();
 
     const selectEmployeeDialog = page.getByRole('dialog').filter({

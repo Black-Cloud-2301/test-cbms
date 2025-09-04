@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
+import {USERS} from '../../../constants/user';
 import {
   fillEditor,
   fillNumber,
@@ -9,14 +9,14 @@ import {
   selectDateV2,
   selectFile, selectMultiple, selectOption,
   selectOptionV2
-} from '../../utils/fill.utils';
-import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
-import {URL_BE_BASE} from '../../constants/common';
-import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {APP_PARAMS} from '../../constants/common/app-param.constants';
-import {validatePolicyTable} from '../../constants/validate-table/policy.constants';
-import {IAppParam, SaveFormOptions} from '../../constants/interface';
-import {getGlobalVariable, setGlobalVariable} from '../../utils';
+} from '../../../utils/fill.utils';
+import {checkSearchResponse, validateDataTable} from '../../../utils/validate.utils';
+import {URL_BE_BASE} from '../../../constants/common';
+import {saveFileParam, setupAppParams} from '../../../utils/params.utils';
+import {APP_PARAMS} from '../../../constants/common/app-param.constants';
+import {validatePolicyTable} from '../../../constants/validate-table/policy.constants';
+import {IAppParam, SaveFormOptions} from '../../../constants/interface';
+import {getGlobalVariable, setGlobalVariable} from '../../../utils';
 
 test.describe('test policy', () => {
   test('create policy full flow', async ({page}) => {

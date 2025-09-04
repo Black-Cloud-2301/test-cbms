@@ -1,7 +1,7 @@
 import {expect, Page, test} from '@playwright/test';
 import {login} from '../login';
 import pdfParse from 'pdf-parse';
-import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../constants/common';
+import {CBMS_MODULE, CONTRACTOR_NAME_SEARCH} from '../../../constants/common';
 
 const contractorName = 'TA autotest 3';
 

@@ -1,8 +1,8 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {IUser, USER_FINANCE, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES} from '../../constants/common';
-import {getGlobalVariable, setGlobalVariable} from '../../utils';
+import {IUser, USER_FINANCE, USER_POLICY, USER_TECH, USERS} from '../../../constants/user';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES} from '../../../constants/common';
+import {getGlobalVariable, setGlobalVariable} from '../../../utils';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getAvailableContractorPurchase} from '../phase_4/selection_plan.spec';
 

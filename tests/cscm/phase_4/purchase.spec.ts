@@ -1,19 +1,19 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
-import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
-import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../constants/common';
+import {USERS} from '../../../constants/user';
+import {fillNumber, fillText, selectDate, selectFile, selectOption} from '../../../utils/fill.utils';
+import {CBMS_MODULE, CONTRACTOR_STATUS, ROUTES, URL_BE_BASE} from '../../../constants/common';
 import {
   checkSearchResponse,
   validateDataTable,
   validateInputNumber,
   validateInputText
-} from '../../utils/validate.utils';
-import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
-import {IAppParam} from '../../constants/interface';
-import {APP_PARAMS} from '../../constants/common/app-param.constants';
-import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {validatePurchaseTable} from '../../constants/validate-table/policy.constants';
+} from '../../../utils/validate.utils';
+import {getGlobalVariable, screenshot, setGlobalVariable} from '../../../utils';
+import {IAppParam} from '../../../constants/interface';
+import {APP_PARAMS} from '../../../constants/common/app-param.constants';
+import {saveFileParam, setupAppParams} from '../../../utils/params.utils';
+import {validatePurchaseTable} from '../../../constants/validate-table/policy.constants';
 import {checkImportToastSuccess} from "./full_follow_1.13.spec";
 
 const PURCHASE_NAME = `TA autotest đề xuất mua sắm`;
@@ -310,7 +310,7 @@ export const createPurchase = async (page: Page, mainDialog: Locator, nameSearch
   await selectDate(page, mainDialog, 'decisionDay');
   await selectOption(page, mainDialog, 'approvalLevel', 'Ban TGĐ TCT');
   await selectFile({page,locator: mainDialog, value: 'assets/files/sample.pdf', fileType: 'Tờ trình/đề xuất được phê duyệt'});
-  await mainDialog.locator('input[type="file"][accept=".xls, .xlsx"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+  await mainDialog.locator('input[type="file"][accept=".xls, .xlsx"]').setInputFiles('assets/files/bieu_mau_hang_hoa_mua_sam.xlsx');
   await page.getByRole('button', {name: 'Tải lên'}).click();
   await checkImportToastSuccess({page});
   await saveForm({page, dialog: mainDialog});

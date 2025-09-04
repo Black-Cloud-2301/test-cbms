@@ -1,10 +1,10 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USER_FINANCE, USER_LEAD, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
-import {CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
-import {getGlobalVariable, setGlobalVariable} from '../../utils';
+import {USER_FINANCE, USER_LEAD, USER_POLICY, USER_TECH, USERS} from '../../../constants/user';
+import {CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE} from '../../../constants/common';
+import {getGlobalVariable, setGlobalVariable} from '../../../utils';
 import {getAvailableContractorPurchase} from './selection_plan.spec';
-import {fillText, fillTextV2} from '../../utils/fill.utils';
+import {fillText, fillTextV2} from '../../../utils/fill.utils';
 import {checkImportToastSuccess} from "./full_follow_1.13.spec";
 
 test.describe('test document-by-pid ver .11', () => {
@@ -85,7 +85,7 @@ export const updateDocumentByPid = async (page: Page) => {
 
     await subDialog.getByRole('button', {name: 'Tiếp'}).click();
 
-    await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+    await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_hang_hoa_mua_sam.xlsx');
     await subDialog.getByRole('button', {name: 'Tải lên'}).click();
 
     let table = subDialog.locator('app-form-table').first();
@@ -121,7 +121,7 @@ export const updateDocumentByPid = async (page: Page) => {
     subDialog = page.getByRole('dialog', {name: 'Cập nhật tờ trình phê duyệt KHLCNT'});
 
     await subDialog.getByRole('button', {name: 'Tiếp'}).click();
-    await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_lap_hsmt_mua_sam.xlsx');
+    await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_hang_hoa_mua_sam.xlsx');
     await subDialog.getByRole('button', {name: 'Tải lên'}).click();
     await checkImportToastSuccess({page});
 
@@ -290,7 +290,6 @@ export const appraisalDocumentByPid = async ({page, url = '/CBMS_DOCUMENT_BY_PID
     page: Page,
     url?: string
 }) => {
-    await page.pause();
     await login(page, url, USERS.PC);
 
     const currentContractorName = getAvailableContractorPurchase({

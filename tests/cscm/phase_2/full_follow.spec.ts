@@ -1,9 +1,9 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USER_FINANCE, USER_LEAD, USER_POLICY, USER_TECH, USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
-import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
-import {fillText, fillTextV2, selectFile} from '../../utils/fill.utils';
+import {USER_FINANCE, USER_LEAD, USER_POLICY, USER_TECH, USERS} from '../../../constants/user';
+import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../../constants/common';
+import {getGlobalVariable, screenshot, setGlobalVariable} from '../../../utils';
+import {fillText, fillTextV2, selectFile} from '../../../utils/fill.utils';
 import {getAvailableContractorPurchase} from '../phase_4/selection_plan.spec';
 import {checkImportToastSuccess} from '../phase_4/full_follow_1.13.spec';
 
@@ -81,7 +81,6 @@ export const importDocumentByPidDTRR = async (page: Page) => {
         has: page.locator('span.p-dialog-title:text("Cập nhật bản cam kết HDDT")')
     });
 
-    await fillTextV2(subDialog, 'commitHddtNo', 'SO_BAN_CAM_KET_TA_AUTOTEST_01')
     await page.getByRole('button', {name: 'Tiếp'}).click();
 
 
@@ -220,7 +219,7 @@ export const importDocumentByPidCDT = async (page: Page) => {
         has: page.locator('span.p-dialog-title:text("Cập nhật thư mời tham gia đề xuất")')
     });
 
-    await selectFile({page, locator: subDialog, value: 'assets/files/sample-img.png'});
+    await selectFile({page, locator: subDialog, value: 'assets/files/sample.pdf'});
     await page.getByRole('button', {name: 'Tiếp'}).click();
     await subDialog.locator('input[type="file"]').setInputFiles('assets/files/bieu_mau_hang_hoa.xlsx');
     await subDialog.getByRole('button', {name: 'Tải lên'}).click();

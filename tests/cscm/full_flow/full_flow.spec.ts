@@ -1,19 +1,19 @@
 import {expect, test} from '@playwright/test';
 import {login} from '../login';
-import {bumpMainSerial, getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
-import {selectDate, selectOption} from '../../utils/fill.utils';
-import {IAppParam} from '../../constants/interface';
+import {bumpMainSerial, getGlobalVariable, screenshot, setGlobalVariable} from '../../../utils';
+import {selectDate, selectOption} from '../../../utils/fill.utils';
+import {IAppParam} from '../../../constants/interface';
 import {
     checkSearchResponse,
     checkSearchResponseV2,
     validateDataTable,
     validateInputNumber,
     validateInputText
-} from '../../utils/validate.utils';
-import {CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../constants/common';
-import {APP_PARAMS} from '../../constants/common/app-param.constants';
-import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {validatePolicyTable, validateProjectTable} from '../../constants/validate-table/policy.constants';
+} from '../../../utils/validate.utils';
+import {CONTRACTOR_STATUS, ROUTES, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../../constants/common';
+import {APP_PARAMS} from '../../../constants/common/app-param.constants';
+import {saveFileParam, setupAppParams} from '../../../utils/params.utils';
+import {validatePolicyTable, validateProjectTable} from '../../../constants/validate-table/policy.constants';
 import {appraisalPolicy, createPolicy, searchPolicy, submitToAppraisalPolicy} from '../phase _1/policy.spec';
 import {appraisalProject, createProject, searchProject, submitToAppraisalProject} from '../phase _1/project.spec';
 import {adjustmentPurchase, createPurchase, searchPurchase, submitToAppraisalPurchase} from '../phase_4/purchase.spec';
@@ -50,7 +50,7 @@ import {
     createCostSubmission,
     submitToAppraisalCostSubmission
 } from '../phase_4/cost-submission.spec';
-import {USERS} from '../../constants/user';
+import {USERS} from '../../../constants/user';
 
 test.describe('test all invest', () => {
     test.describe.configure({mode: 'serial'});
@@ -113,7 +113,6 @@ test.describe('test all invest', () => {
         const totalValue = 10000000;
         const packageCount = 2;
         const nameSearch = await createSelectionPlanNewPackageInvest(page, totalValue, packageCount);
-        await page.pause();
         await submitToAppraiserSelectionPlan({page, nameSearch});
         await appraisalSelectionPlan({page, nameSearch});
     });
@@ -127,6 +126,7 @@ test.describe('test all invest', () => {
 
     test('import document by pid', async ({page}) => {
         await importDocumentByPidDTRR(page);
+        await page.pause();
         await documentByPidSubmitToAppraiser({page});
         await documentByPidVerify({page});
     });
@@ -144,6 +144,7 @@ test.describe('test all invest', () => {
 
     test('import document by pid CDT', async ({page}) => {
         await importDocumentByPidCDT(page);
+        await page.pause();
         await documentByPidSubmitToAppraiser({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
         await documentByPidVerify({page, selectContractorForm: SELECT_CONTRACTOR_FORM_TYPE.CDT});
     });
@@ -219,6 +220,7 @@ test.describe('test all shopping', () => {
         await loginAndSearch({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
 
         await updateDocumentByPid(page);
+        await page.pause();
         await submitToAppraisalDocumentByPid({page});
         await appraisalDocumentByPid({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
     });
@@ -231,12 +233,14 @@ test.describe('test all shopping', () => {
 
     test('import document by pid shopping phase 2', async ({page}) => {
         await createDocumentByBidShoppingPhase2({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
+        await page.pause();
         await submitToAppraisalDocumentByPid({page, status: CONTRACTOR_STATUS.EVALUATED});
         await appraisalDocumentByPidShopping({page, url: ROUTES.DOCUMENT_BY_PID_PURCHASE});
     })
 
     test('import document by pid shopping CDT', async ({page}) => {
         await createDocumentByPidShoppingCDT({page});
+        await page.pause();
         await documentByPidSubmitToAppraiser({
             page,
             invest: false,

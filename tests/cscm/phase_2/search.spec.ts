@@ -1,8 +1,8 @@
 import {expect, test} from '@playwright/test';
 import {login} from '../login';
-import {IContractorPage} from '../../constants/interface';
-import {fillValue} from '../../utils/fill.utils';
-import {SearchData} from '../../constants/document-by-pid/create.constants';
+import {IContractorPage} from '../../../constants/interface';
+import {fillValue} from '../../../utils/fill.utils';
+import {SearchData} from '../../../constants/document-by-pid/create.constants';
 
 test('has title', async ({page}) => {
     await login(page, '/CBMS_DOCUMENT_BY_PID');

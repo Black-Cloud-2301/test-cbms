@@ -1,7 +1,7 @@
 import {expect, Page} from '@playwright/test';
 import * as path from 'node:path';
-import {IUser, USERS} from '../../constants/user';
-import {URL_BASE} from '../../constants/common';
+import {IUser, USERS} from '../../../constants/user';
+import {URL_BASE} from '../../../constants/common';
 
 const authFile = path.join(__dirname, '..', 'state.json');
 

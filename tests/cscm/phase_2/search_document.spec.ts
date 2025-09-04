@@ -1,7 +1,7 @@
 import {test} from '@playwright/test';
 import {login} from '../login';
-import {checkSearchResponse} from '../../utils/validate.utils';
-import {URL_BE_BASE} from '../../constants/common';
+import {checkSearchResponse} from '../../../utils/validate.utils';
+import {URL_BE_BASE} from '../../../constants/common';
 
 test('document search form', async ({page}) => {
   test.setTimeout(180000);

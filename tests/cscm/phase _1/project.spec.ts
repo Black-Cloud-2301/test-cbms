@@ -1,14 +1,14 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
-import {fillText, selectAutocompleteMulti, selectDate, selectFile, selectOption} from '../../utils/fill.utils';
-import {checkSearchResponse, validateDataTable} from '../../utils/validate.utils';
-import {URL_BE_BASE} from '../../constants/common';
-import {IAppParam} from '../../constants/interface';
-import {APP_PARAMS} from '../../constants/common/app-param.constants';
-import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {validateProjectTable} from '../../constants/validate-table/policy.constants';
-import {getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
+import {USERS} from '../../../constants/user';
+import {fillText, selectAutocompleteMulti, selectDate, selectFile, selectOption} from '../../../utils/fill.utils';
+import {checkSearchResponse, validateDataTable} from '../../../utils/validate.utils';
+import {URL_BE_BASE} from '../../../constants/common';
+import {IAppParam} from '../../../constants/interface';
+import {APP_PARAMS} from '../../../constants/common/app-param.constants';
+import {saveFileParam, setupAppParams} from '../../../utils/params.utils';
+import {validateProjectTable} from '../../../constants/validate-table/policy.constants';
+import {getGlobalVariable, screenshot, setGlobalVariable} from '../../../utils';
 
 const PROJECT_NAME = `TA autotest dự án`;
 

@@ -1,10 +1,10 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
-import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../constants/common';
+import {USERS} from '../../../constants/user';
+import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE} from '../../../constants/common';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
-import {getGlobalVariable, setGlobalVariable} from '../../utils';
-import {fillTextV2, selectFile} from '../../utils/fill.utils';
+import {getGlobalVariable, setGlobalVariable} from '../../../utils';
+import {fillTextV2, selectFile} from '../../../utils/fill.utils';
 
 
 test.describe('test document-by-pid ver 2', () => {

@@ -1,6 +1,6 @@
 import {expect, Locator, Page, test} from '@playwright/test';
 import {login, loginWithRole} from '../login';
-import {USERS} from '../../constants/user';
+import {USERS} from '../../../constants/user';
 import {
     fillNumber,
     fillText,
@@ -8,19 +8,19 @@ import {
     selectDate,
     selectFile, selectMultiple,
     selectOption, selectOptionV2
-} from '../../utils/fill.utils';
-import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../constants/common';
+} from '../../../utils/fill.utils';
+import {CBMS_MODULE, CONTRACTOR_STATUS, SELECT_CONTRACTOR_FORM_TYPE, URL_BE_BASE} from '../../../constants/common';
 import {
     checkSearchResponse,
     validateDataTable,
     validateInputNumber,
     validateInputText
-} from '../../utils/validate.utils';
-import {bumpMainSerial, getGlobalVariable, screenshot, setGlobalVariable} from '../../utils';
-import {IAppParam} from '../../constants/interface';
-import {APP_PARAMS} from '../../constants/common/app-param.constants';
-import {saveFileParam, setupAppParams} from '../../utils/params.utils';
-import {validateSelectPlanTable} from '../../constants/validate-table/policy.constants';
+} from '../../../utils/validate.utils';
+import {bumpMainSerial, getGlobalVariable, screenshot, setGlobalVariable} from '../../../utils';
+import {IAppParam} from '../../../constants/interface';
+import {APP_PARAMS} from '../../../constants/common/app-param.constants';
+import {saveFileParam, setupAppParams} from '../../../utils/params.utils';
+import {validateSelectPlanTable} from '../../../constants/validate-table/policy.constants';
 import {getAvailableContractorInvest} from '../phase_2/full_follow.spec';
 import {getAvailablePurchase} from './purchase.spec';
 import {getAvailableCostSubmission} from './cost-submission.spec';
